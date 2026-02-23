@@ -1,0 +1,5 @@
+{"tiles": [{"type": "stone", "pos": [0, 0], "collisions": true}, {"type": "grass block", "pos": [0, 12], "collisions": true}, 
+{"type": "path", "pos": [0, 24], "collisions": true}, {"type": "dirt", "pos": [0, 36], "collisions": true}, 
+{"type": "sand", "pos": [12, 0], "collisions": true}, {"type": "spikes", "pos": [12, 12], "collisions": false, "damage": true, "hitbox": [2, 8, 8, 12]}, 
+{"type": "grass", "pos": [12, 24], "collisions": false}, {"type": "dry grass", "pos": [12, 36], "collisions": false}, 
+{"type": "portal", "pos": [24, 0], "collisions": false, "portal": true}]}
