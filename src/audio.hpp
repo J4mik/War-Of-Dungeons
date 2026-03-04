@@ -1,3 +1,5 @@
+#pragma once
+
 #include <SDL3/SDL_mixer.h>
 #include <thread>
 

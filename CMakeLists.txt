@@ -5,6 +5,7 @@ project(FlashSong VERSION 1.0
 
 set(CMAKE_CPP_COMPILER g++)
 set(CMAKE_MAKE_PROGRAM ninja)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # for release
 set(CMAKE_CXX_FLAGS) #-mwindows)
