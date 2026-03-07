@@ -29,10 +29,8 @@ int main(int argc, char* argv[])
 
     SDL_RenderTexture(rend, playButton, NULL, &playButtonPos);
 
-    mein.generateChunk(0, 0);
-
     SDL_RenderPresent(rend);
-    SDL_Delay(10);
+    // SDL_Delay(10);
     // }
 
     playButtonPos = {0, 0, 0, 0};

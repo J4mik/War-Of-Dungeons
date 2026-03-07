@@ -10,10 +10,14 @@ uint16_t deltaTime;
 
 struct
 {
-    int w = 1000;
-    int h = 600;
+    int w = 1200;
+    int h = 700;
     float ofsetX;
     float ofsetY;
+    float posX;
+    float posY;
+    int tempOfsetX;
+    int tempOfsetY;
 } screen;
 
 class sprite
