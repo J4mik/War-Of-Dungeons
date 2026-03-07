@@ -6,7 +6,7 @@
 #include <vector>
 #include <thread>
 
-#define GENERATECHUNKOFSCREENOFSET 20
+#define GENERATECHUNKOFSCREENOFSET 200
 
 #define PLAYERSPEED 480
 
@@ -41,14 +41,14 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
 
 
-    for (int x = -4; x < 4; ++x)
-    {
-        for (int y = -3; y < 3; ++y)
-        {
-            chunks.emplace_back(chunk{});
-            chunks[chunks.size() - 1].loadChunk(x, y);
-        }
-    }
+    // for (int x = -4; x < 4; ++x)
+    // {
+    //     for (int y = -3; y < 3; ++y)
+    //     {
+    //         chunks.emplace_back(chunk{});
+    //         chunks[chunks.size() - 1].loadChunk(x, y);
+    //     }
+    // }
 
 
     inputs();
@@ -87,7 +87,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         }
 
 
-        // checks if chuks are on the screen
+        // checks if chunks are on the screen
         for (int i = 0; i < chunks.size(); ++i) {
             if (colidetect(SDL_FRect{
                 float(chunks[i].x * CHUNKSIZEPX + screen.tempOfsetX),
@@ -116,9 +116,9 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
             else
             {
                 // deletes chunks that are of the screen
-                // std::swap(chunks[i], chunks.back());
-                // chunks.pop_back();
-                // --i;
+                std::swap(chunks[i], chunks.back());
+                chunks.pop_back();
+                --i;
             }
             for (int o = 0; o < unloadedChunks.size(); ++o) 
             {
@@ -126,8 +126,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                 {
                     std::swap(unloadedChunks[i], unloadedChunks.back());
                     unloadedChunks.pop_back();
-                    // --o;
-                    break;
+                    --o;
                 }
             }   
         }
