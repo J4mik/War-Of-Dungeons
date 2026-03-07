@@ -18,10 +18,10 @@ std::vector<position> unloadedChunks{};
 
 sprite player;
 
-int minX;
-int minY;
-int maxX;
-int maxY;
+int16_t minX;
+int16_t minY;
+int16_t maxX;
+int16_t maxY;
 
 bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 {
@@ -77,10 +77,12 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         minY = std::floor((screen.posY - screen.h * 0.5 - GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
         maxX = std::ceil((screen.posX + screen.w * 0.5 + GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
         maxY = std::ceil((screen.posY + screen.h * 0.5 + GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
+
+        // std::cout << "(" << minX << ", " << minY << "), (" << maxX << ", " << maxY <<  ")\n";
         
-        for (int x = minX; x < maxX + 1; ++x)
+        for (int16_t x = minX; x < maxX + 1; ++x)
         {
-            for (int y = minY; y < maxY + 1; ++y)
+            for (int16_t y = minY; y < maxY + 1; ++y)
             {
                 unloadedChunks.emplace_back(position{x, y});
             }
@@ -88,7 +90,8 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 
 
         // checks if chunks are on the screen
-        for (int i = 0; i < chunks.size(); ++i) {
+        for (int i = 0; i < chunks.size(); ++i) 
+        {
             if (colidetect(SDL_FRect{
                 float(chunks[i].x * CHUNKSIZEPX + screen.tempOfsetX),
                 float(chunks[i].y * CHUNKSIZEPX + screen.tempOfsetY),
