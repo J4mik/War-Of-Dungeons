@@ -14,14 +14,14 @@ using namespace nlohmann;
 
 std::vector<chunk> chunks{};
 
-std::vector<position> unloadedChunks{};
-
 sprite player;
 
 int16_t minX;
 int16_t minY;
 int16_t maxX;
 int16_t maxY;
+
+bool tempFlag = 1;
 
 bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 {
@@ -80,68 +80,59 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 
         // std::cout << "(" << minX << ", " << minY << "), (" << maxX << ", " << maxY <<  ")\n";
         
-        for (int16_t x = minX; x < maxX + 1; ++x)
-        {
-            for (int16_t y = minY; y < maxY + 1; ++y)
-            {
-                unloadedChunks.emplace_back(position{x, y});
-            }
-        }
-
-
-        // checks if chunks are on the screen
+        // checks which tiles to unload
         for (int i = 0; i < chunks.size(); ++i) 
         {
-            if (colidetect(SDL_FRect{
-                float(chunks[i].x * CHUNKSIZEPX + screen.tempOfsetX),
-                float(chunks[i].y * CHUNKSIZEPX + screen.tempOfsetY),
-                CHUNKSIZEPX, CHUNKSIZEPX},
-                SDL_FRect{-GENERATECHUNKOFSCREENOFSET, -GENERATECHUNKOFSCREENOFSET, 
-                float(screen.w + GENERATECHUNKOFSCREENOFSET), 
-                float(screen.h + GENERATECHUNKOFSCREENOFSET)}))
-            {
-
-                // loops through every tile in a chunk
-                for (int x = 0; x < CHUNKSIZE; ++x)
-                {
-                    for (int y = 0; y < CHUNKSIZE; ++y)
-                    {
-                        if (chunks[i].tiles[x][y] == 1)
-                        {
-                            // renders chunk
-                            temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX;
-                            temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY;
-                            SDL_RenderTexture(rend, texture, &clip, &temp);
-                        }
-                    }
-                }  
-            }
-            else
-            {
-                // deletes chunks that are of the screen
+            if (chunks[i].x < minX || chunks[i].x > maxX || chunks[i].y < minY || chunks[i].y > maxY) {
                 std::swap(chunks[i], chunks.back());
                 chunks.pop_back();
                 --i;
             }
-            for (int o = 0; o < unloadedChunks.size(); ++o) 
-            {
-                if (unloadedChunks[o].x == chunks[i].x && unloadedChunks[o].y == chunks[i].y)
-                {
-                    std::swap(unloadedChunks[i], unloadedChunks.back());
-                    unloadedChunks.pop_back();
-                    --o;
-                }
-            }   
         }
 
-
-        while (unloadedChunks.size() > 0) 
+        // checks which tiles to load
+        for (int16_t x = minX; x < maxX + 1; ++x)
         {
-            chunks.emplace_back(chunk{});
-            chunks[chunks.size() - 1].loadChunk(unloadedChunks[0].x, unloadedChunks[0].y);
-            std::swap(unloadedChunks[0], unloadedChunks.back());
-            unloadedChunks.pop_back();
+            for (int16_t y = minY; y < maxY + 1; ++y)
+            {
+                for (int i = 0; i < chunks.size(); ++i) 
+                {
+                    if (x == chunks[i].x && y == chunks[i].y)
+                    {
+                        tempFlag = 0;
+                        // break;
+                    }
+                }
+                if (tempFlag)
+                {
+                chunks.emplace_back(chunk{});
+                chunks[chunks.size() - 1].loadChunk(x, y);
+                } 
+                tempFlag = 1;
+            }
         }
+
+        // checks if chunks are on the screen
+        for (int i = 0; i < chunks.size(); ++i) 
+        {
+            // loops through every tile in a chunk
+            for (int x = 0; x < CHUNKSIZE; ++x)
+            {
+                for (int y = 0; y < CHUNKSIZE; ++y)
+                {
+                    if (chunks[i].tiles[x][y] == 1)
+                    {
+                            // renders chunk
+                        temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX;
+                        temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY;
+                        SDL_RenderTexture(rend, texture, &clip, &temp);
+                    }
+                }
+            }  
+        }
+
+        std::cout << chunks.size() << "\n";
+
 
         // player rendering
         player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime * PLAYERSPEED * 0.0001;
