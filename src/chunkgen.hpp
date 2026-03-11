@@ -40,14 +40,22 @@ int generateBiome(std::int32_t x, std::int32_t y) {
 
     double humidity;
     double temperature = 0.7;
+    double weirdness;
     double liveliness;
 
     humidity = perlin.octave2D_01(x * 0.0018, y * 0.0018, 5);
     temperature = perlin.octave2D_01(x * 0.002 + 6769, y * 0.002 + 42069, 5);
+    weirdness = perlin.octave2D_01(x * 0.001 + 69420, y * 0.001 + 61678, 5);
 
     if (temperature > 0.6) {
         if (humidity < 0.38) {
-            return 1;
+            if (weirdness < 0.67) {
+                return 1;
+            }
+            else
+            {
+                return 6;
+            }
             // desert
         }
         else if (humidity < 0.63) {
@@ -60,12 +68,12 @@ int generateBiome(std::int32_t x, std::int32_t y) {
         }
     }
     else if (temperature > 0.4) {
-        if (humidity < 0.36)
+        if (humidity < 0.38)
         {
             return 3;
             // stone lands
         }
-        if (humidity < 0.6)
+        if (humidity < 0.63)
         {
             return 4;
             // plains
@@ -77,7 +85,11 @@ int generateBiome(std::int32_t x, std::int32_t y) {
         }
     }
     else {
-        return 5;
+        if (humidity > 0.63)
+        {
+            return 8;
+        }
+        return 7;
     }
     return 0;
 }

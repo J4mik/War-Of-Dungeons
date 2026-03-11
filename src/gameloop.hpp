@@ -8,7 +8,7 @@
 
 #define GENERATECHUNKOFSCREENOFSET 200
 
-#define PLAYERSPEED 0.95
+#define PLAYERSPEED 1.03
 
 using namespace nlohmann;
 
@@ -137,14 +137,14 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
             {
                 for (int y = 0; y < CHUNKSIZE; ++y)
                 {
-                    if (chunks[i].biome[x][y] == 1) {
+                    if (chunks[i].biome[x][y] == 0) {
+                        clip.x = 48;
+                    }
+                    else if (chunks[i].biome[x][y] == 1) {
                         clip.x = 12;
                     }
                     else if (chunks[i].biome[x][y] == 2) {
                         clip.x = 24;
-                    }
-                    else if (chunks[i].biome[x][y] == 0) {
-                        clip.x = 48;
                     }
                     else if (chunks[i].biome[x][y] == 3) {
                         clip.x = 0;
@@ -152,8 +152,20 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     else if (chunks[i].biome[x][y] == 4) {
                         clip.x = 60;
                     }
-                    else {
+                    else if (chunks[i].biome[x][y] == 5) {
+                        clip.x = 84;
+                    }
+                    else if (chunks[i].biome[x][y] == 6) {
+                        clip.x = 96;
+                    }
+                    else if (chunks[i].biome[x][y] == 7) {
+                        clip.x = 72;
+                    }
+                    else if (chunks[i].biome[x][y] == 8) {
                         clip.x = 36;
+                    }
+                    else {
+                        clip.x = 96;
                     }
 
                     if (chunks[i].tiles[x][y] == 1)
