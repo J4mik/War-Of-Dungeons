@@ -8,7 +8,7 @@
 
 #define GENERATECHUNKOFSCREENOFSET 200
 
-#define PLAYERSPEED 480
+#define PLAYERSPEED 0.95
 
 using namespace nlohmann;
 
@@ -23,54 +23,8 @@ int16_t maxY;
 
 bool tempFlag = 1;
 
-bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
-{
-    if (!running)
-    {
-        return 0;
-    }
-
-    SDL_FRect clip{0, 0, 12, 12};
-    SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
-    SDL_FRect playerPos{0, 0, 12, 20};
-
-    SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-
-    SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
-    SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
-
-
-    // for (int x = -4; x < 4; ++x)
-    // {
-    //     for (int y = -3; y < 3; ++y)
-    //     {
-    //         chunks.emplace_back(chunk{});
-    //         chunks[chunks.size() - 1].loadChunk(x, y);
-    //     }
-    // }
-
-
-    inputs();
-
-    while (running)
-    {
-        inputs();
-        
-        SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
-        SDL_RenderClear(rend);
-
-        SDL_SetRenderDrawColor(rend, 30, 32, 33, 255);
-
-
-        // tile rendering
-        screen.posX -= (screen.posX - player.x) * 0.015 * deltaTime;
-        screen.posY -= (screen.posY - player.y) * 0.015 * deltaTime;
-        screen.ofsetX = screen.w * 0.5;
-        screen.ofsetY = screen.h * 0.5;
-        screen.tempOfsetX = std::floor(screen.ofsetX - screen.posX);
-        screen.tempOfsetY = std::floor(screen.ofsetY - screen.posY);
-
+void loadChunks() {
+    while (running) {
 
         // works out the minimum and maximum coordinates of chunks needed to fill the screen with a bit of headroom
         minX = std::floor((screen.posX - screen.w * 0.5 - GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
@@ -107,10 +61,73 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                 {
                 chunks.emplace_back(chunk{});
                 chunks[chunks.size() - 1].loadChunk(x, y);
+                // if (!running) {
+                    break;
+                // }
                 } 
                 tempFlag = 1;
             }
         }
+        SDL_Delay(1);
+    }
+}
+
+void playerMovement() 
+{
+
+}
+
+bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
+{
+    if (!running)
+    {
+        return 0;
+    }
+
+    SDL_FRect clip{0, 0, 12, 12};
+    SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
+    SDL_FRect playerPos{0, 0, 12, 20};
+
+    SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+
+    SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
+    SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
+
+
+    // for (int x = -4; x < 4; ++x)
+    // {
+    //     for (int y = -3; y < 3; ++y)
+    //     {
+    //         chunks.emplace_back(chunk{});
+    //         chunks[chunks.size() - 1].loadChunk(x, y);
+    //     }
+    // }
+
+    expDecay decay;
+    decay.init("./data/num.bin");
+
+    inputs();
+
+    std::thread t1(loadChunks);
+
+    while (running)
+    {
+        inputs();
+        
+        SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
+        SDL_RenderClear(rend);
+
+        SDL_SetRenderDrawColor(rend, 30, 32, 33, 255);
+
+
+        // tile rendering
+        screen.posX -= (screen.posX - player.x) * 0.15 * deltaTime * (1 - decay.pow255[deltaTime]);
+        screen.posY -= (screen.posY - player.y) * 0.15 * deltaTime * (1 - decay.pow255[deltaTime]);
+        screen.ofsetX = screen.w * 0.5;
+        screen.ofsetY = screen.h * 0.5;
+        screen.tempOfsetX = std::floor(screen.ofsetX - screen.posX);
+        screen.tempOfsetY = std::floor(screen.ofsetY - screen.posY);
 
         // checks if chunks are on the screen
         for (int i = 0; i < chunks.size(); ++i) 
@@ -120,6 +137,25 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
             {
                 for (int y = 0; y < CHUNKSIZE; ++y)
                 {
+                    if (chunks[i].biome[x][y] == 1) {
+                        clip.x = 12;
+                    }
+                    else if (chunks[i].biome[x][y] == 2) {
+                        clip.x = 24;
+                    }
+                    else if (chunks[i].biome[x][y] == 0) {
+                        clip.x = 48;
+                    }
+                    else if (chunks[i].biome[x][y] == 3) {
+                        clip.x = 0;
+                    }
+                    else if (chunks[i].biome[x][y] == 4) {
+                        clip.x = 60;
+                    }
+                    else {
+                        clip.x = 36;
+                    }
+
                     if (chunks[i].tiles[x][y] == 1)
                     {
                             // renders chunk
@@ -135,11 +171,37 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 
 
         // player rendering
-        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime * PLAYERSPEED * 0.0001;
-        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime * PLAYERSPEED * 0.0001;
+        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime * PLAYERSPEED * (1 - decay.pow255[deltaTime]);
+        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime * PLAYERSPEED * (1 - decay.pow255[deltaTime]);
 
-        player.VectX *= (50 - deltaTime) * 0.02;
-        player.VectY *= (50 - deltaTime) * 0.02;
+        player.VectX *= decay.pow255[deltaTime];
+        player.VectY *= decay.pow255[deltaTime];
+
+        if (player.VectX > 0) {
+            player.VectX -= deltaTime * 0.03125;
+            if (player.VectX < 0) {
+                player.VectX = 0;
+            }
+        }
+        if (player.VectX < 0) {
+            player.VectX += deltaTime * 0.03125;
+            if (player.VectX > 0) {
+                player.VectX = 0;
+            }
+        }
+        if (player.VectY > 0) {
+            player.VectY -= deltaTime * 0.03125;
+            if (player.VectY < 0) {
+                player.VectY = 0;
+            }
+        }
+        if (player.VectY < 0) {
+            player.VectY += deltaTime * 0.03125;
+            if (player.VectY > 0) {
+                player.VectY = 0;
+            }
+        }
+
 
 
         // clamps the player speed
@@ -163,5 +225,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         SDL_Delay(3);
     }
     musicRunning = 0;
+    running = 0;
+    t1.join();
     return 0;
 }

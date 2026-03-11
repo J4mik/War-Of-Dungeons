@@ -49,6 +49,39 @@ uint16_t mouseY;
 
 bool running = 1;
 
+class expDecay {
+	public:
+	double pow255[1024] = {};
+
+	void init(std::basic_string<char> path) {
+
+		std::ifstream FileStream;
+		FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		try {
+			FileStream.open(path, std::ios::in|std::ios::binary);
+			for (int i = 0; i < 1024; ++i) {
+				FileStream.read((char*) &pow255[i], 8);
+			}
+			FileStream.close();
+		}
+		catch (std::ifstream::failure& error){
+			std::cout << "Error";
+			if (!pow255[0] == 1) {
+				std::cout << " reading from file '" << path << "', recreating file contents\n";
+				std::ofstream FileStream;
+				FileStream.open(path, std::ios::out|std::ios::binary);
+				pow255[0] = 1;
+				FileStream.write((char*) &pow255[0], 8);
+				for (int i = 1; i < 1024; ++i) {
+					pow255[i] = pow255[i-1] * 190/192;
+					FileStream.write((char*) &pow255[i], 8);
+				}
+                FileStream.close();
+			}
+		}
+	}
+};
+
 void inputs()
 {
     SDL_Event event;
