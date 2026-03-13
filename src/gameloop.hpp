@@ -22,6 +22,9 @@ int16_t minY;
 int16_t maxX;
 int16_t maxY;
 
+int spawnX = 0;
+int spawnY = 0;
+
 bool tempFlag = 1;
 
 void loadChunks()
@@ -72,7 +75,7 @@ void loadChunks()
                 tempFlag = 1;
             }
         }
-        SDL_Delay(1);
+        // SDL_Delay(1);
     }
 }
 
@@ -95,22 +98,25 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
     SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
 
+    srand(SEED);
 
-    // for (int x = -4; x < 4; ++x)
-    // {
-    //     for (int y = -3; y < 3; ++y)
-    //     {
-    //         chunks.emplace_back(chunk{});
-    //         chunks[chunks.size() - 1].loadChunk(x, y);
-    //     }
-    // }
+    // calculates player spawn so I'ts always on land
+    while (!calculateTile(spawnX, spawnY))
+    {
+        spawnX += rand() % 64 - 32;
+        spawnY += rand() % 64 - 32;
+        std::cout << spawnX << ", " << spawnY << "\n";
+    }
+
+    player.x = spawnX * TILESIZE;
+    player.y = spawnY * TILESIZE;
+
+    std::thread t1(loadChunks);
 
     expDecay decay;
     decay.init("./data/num.bin");
 
     inputs();
-
-    std::thread t1(loadChunks);
 
     while (running)
     {
@@ -189,8 +195,6 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                 }
             }
         }
-
-        std::cout << chunks.size() << "\n";
 
         player.VectX *= decay.pow255[deltaTime];
         player.VectY *= decay.pow255[deltaTime];

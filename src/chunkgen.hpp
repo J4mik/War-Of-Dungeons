@@ -3,21 +3,21 @@
 #include "../include/perlin/perlin.hpp"
 
 
-#define FREQUENCY1 0.011 // should be between 0.1 and 64
+#define FREQUENCY1 0.008 // should be between 0.1 and 64
 #define MULTIPLIER1 0.7
-#define FREQUENCY2 0.05 // should be between 0.1 and 64
+#define FREQUENCY2 0.03 // should be between 0.1 and 64
 #define MULTIPLIER2 0.15
-#define FREQUENCY3 0.002 // should be between 0.1 and 64
+#define FREQUENCY3 0.0015 // should be between 0.1 and 64
 #define MULTIPLIER3 0.15
 
-#define SPAGETTIFREQUENCY 0.026
+#define SPAGETTIFREQUENCY 0.016
 
 #define CAVETRANSITIONFREQUENCY 0.004
 
-#define OCTAVES 3 // has to be between 1 and 16
+#define OCTAVES 6 // has to be between 1 and 16
 #define SPAGHETTITHRESHOLD -0.82
 #define SWISSCHEESETHRESHOLD 0.54
-#define SEED 5
+#define SEED 69
 
 // generates values for spaghetti caves
 double calculateSpaghettiCave(std::int32_t x, std::int32_t y)
@@ -32,9 +32,9 @@ double calculateSwissCheeseCave(std::int32_t x, std::int32_t y)
 {
     const siv::PerlinNoise perlin{SEED};
 
-    return perlin.octave2D_01((x * FREQUENCY1), (y * FREQUENCY1), OCTAVES) * MULTIPLIER1 +
+    return perlin.octave2D_01((x * FREQUENCY1), (y * FREQUENCY1 + 8590), OCTAVES) * MULTIPLIER1 +
         perlin.octave2D_01((x * FREQUENCY2), (y * FREQUENCY2), OCTAVES) * MULTIPLIER2 +
-        perlin.octave2D_01((x * FREQUENCY3), (y * FREQUENCY3), OCTAVES) * MULTIPLIER3;
+        perlin.octave2D_01((x * FREQUENCY3 + 59475), (y * FREQUENCY3), OCTAVES) * MULTIPLIER3;
 }
 
 int generateBiome(std::int32_t x, std::int32_t y)
@@ -46,9 +46,9 @@ int generateBiome(std::int32_t x, std::int32_t y)
     double weirdness;
     double liveliness;
 
-    humidity = perlin.octave2D_01(x * 0.001, y * 0.001, 5);
-    temperature = perlin.octave2D_01(x * 0.0008 + 6769, y * 0.0008 + 42069, 5);
-    weirdness = perlin.octave2D_01(x * 0.0005 + 69420, y * 0.0005 + 61678, 5);
+    humidity = perlin.octave2D_01(x * 0.0017, y * 0.0017, 6);
+    temperature = perlin.octave2D_01(x * 0.0007 + 6769, y * 0.0007 + 42069, 6);
+    weirdness = perlin.octave2D_01(x * 0.002 + 69420, y * 0.002 + 61678, 6);
 
     if (temperature > 0.6)
     {

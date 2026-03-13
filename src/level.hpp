@@ -9,7 +9,7 @@
 #include "chunkgen.hpp"
 
 
-#define TILESIZE 8
+#define TILESIZE 4
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
 
