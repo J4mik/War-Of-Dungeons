@@ -3,11 +3,11 @@
 #include "../include/perlin/perlin.hpp"
 
 
-#define FREQUENCY1 0.025 // should be between 0.1 and 64
+#define FREQUENCY1 0.011 // should be between 0.1 and 64
 #define MULTIPLIER1 0.7
-#define FREQUENCY2 0.1 // should be between 0.1 and 64
+#define FREQUENCY2 0.05 // should be between 0.1 and 64
 #define MULTIPLIER2 0.15
-#define FREQUENCY3 0.004 // should be between 0.1 and 64
+#define FREQUENCY3 0.002 // should be between 0.1 and 64
 #define MULTIPLIER3 0.15
 
 #define SPAGETTIFREQUENCY 0.026
@@ -20,22 +20,25 @@
 #define SEED 5
 
 // generates values for spaghetti caves
-double calculateSpaghettiCave(std::int32_t x, std::int32_t y) {
+double calculateSpaghettiCave(std::int32_t x, std::int32_t y)
+{
     const siv::PerlinNoise perlin{SEED + 1};
 
     return -pow(1 - std::abs(0.5 - perlin.octave2D_01((x * SPAGETTIFREQUENCY), (y * SPAGETTIFREQUENCY), 5)), 2);
 }
 
 // calculates values for swiss cheese caves
-double calculateSwissCheeseCave(std::int32_t x, std::int32_t y) {
+double calculateSwissCheeseCave(std::int32_t x, std::int32_t y)
+{
     const siv::PerlinNoise perlin{SEED};
 
     return perlin.octave2D_01((x * FREQUENCY1), (y * FREQUENCY1), OCTAVES) * MULTIPLIER1 +
-    perlin.octave2D_01((x * FREQUENCY2), (y * FREQUENCY2), OCTAVES) * MULTIPLIER2 +
-    perlin.octave2D_01((x * FREQUENCY3), (y * FREQUENCY3), OCTAVES) * MULTIPLIER3;
+        perlin.octave2D_01((x * FREQUENCY2), (y * FREQUENCY2), OCTAVES) * MULTIPLIER2 +
+        perlin.octave2D_01((x * FREQUENCY3), (y * FREQUENCY3), OCTAVES) * MULTIPLIER3;
 }
 
-int generateBiome(std::int32_t x, std::int32_t y) {
+int generateBiome(std::int32_t x, std::int32_t y)
+{
     const siv::PerlinNoise perlin{SEED + 3};
 
     double humidity;
@@ -43,13 +46,16 @@ int generateBiome(std::int32_t x, std::int32_t y) {
     double weirdness;
     double liveliness;
 
-    humidity = perlin.octave2D_01(x * 0.0018, y * 0.0018, 5);
-    temperature = perlin.octave2D_01(x * 0.002 + 6769, y * 0.002 + 42069, 5);
-    weirdness = perlin.octave2D_01(x * 0.001 + 69420, y * 0.001 + 61678, 5);
+    humidity = perlin.octave2D_01(x * 0.001, y * 0.001, 5);
+    temperature = perlin.octave2D_01(x * 0.0008 + 6769, y * 0.0008 + 42069, 5);
+    weirdness = perlin.octave2D_01(x * 0.0005 + 69420, y * 0.0005 + 61678, 5);
 
-    if (temperature > 0.6) {
-        if (humidity < 0.38) {
-            if (weirdness < 0.67) {
+    if (temperature > 0.6)
+    {
+        if (humidity < 0.38)
+        {
+            if (weirdness < 0.67)
+            {
                 return 1;
             }
             else
@@ -58,16 +64,19 @@ int generateBiome(std::int32_t x, std::int32_t y) {
             }
             // desert
         }
-        else if (humidity < 0.63) {
+        else if (humidity < 0.63)
+        {
             return 0;
             // savannah
         }
-        else {
+        else
+        {
             return 2;
             // jungle
         }
     }
-    else if (temperature > 0.4) {
+    else if (temperature > 0.4)
+    {
         if (humidity < 0.38)
         {
             return 3;
@@ -78,13 +87,14 @@ int generateBiome(std::int32_t x, std::int32_t y) {
             return 4;
             // plains
         }
-        else 
+        else
         {
             return 5;
             // swamp
         }
     }
-    else {
+    else
+    {
         if (humidity > 0.63)
         {
             return 8;
@@ -95,16 +105,15 @@ int generateBiome(std::int32_t x, std::int32_t y) {
 }
 
 // generates multipliers for the cave types
-bool calculateTile(std::int32_t x, std::int32_t y) {
+bool calculateTile(std::int32_t x, std::int32_t y)
+{
     const siv::PerlinNoise perlin{SEED + 2};
 
     double multiplier = perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.3;
 
-    double value = multiplier * calculateSpaghettiCave(x,y) + 
-    (1 - multiplier) * calculateSwissCheeseCave(x , y);
+    double value = multiplier * calculateSpaghettiCave(x, y) + (1 - multiplier) * calculateSwissCheeseCave(x, y);
 
-    double threshold = (1 - multiplier) * SWISSCHEESETHRESHOLD + 
-    multiplier * SPAGHETTITHRESHOLD;
+    double threshold = (1 - multiplier) * SWISSCHEESETHRESHOLD + multiplier * SPAGHETTITHRESHOLD;
 
     return value > threshold;
 }

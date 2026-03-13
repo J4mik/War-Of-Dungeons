@@ -1,14 +1,15 @@
 #pragma once
 
+#include <thread>
+#include <vector>
 #include "../include/JSON/json.hpp"
 #include "audio.hpp"
 #include "engine.hpp"
-#include <vector>
-#include <thread>
+
 
 #define GENERATECHUNKOFSCREENOFSET 200
 
-#define PLAYERSPEED 1.03
+#define PLAYERSPEED 0.34
 
 using namespace nlohmann;
 
@@ -23,8 +24,10 @@ int16_t maxY;
 
 bool tempFlag = 1;
 
-void loadChunks() {
-    while (running) {
+void loadChunks()
+{
+    while (running)
+    {
 
         // works out the minimum and maximum coordinates of chunks needed to fill the screen with a bit of headroom
         minX = std::floor((screen.posX - screen.w * 0.5 - GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
@@ -33,11 +36,12 @@ void loadChunks() {
         maxY = std::ceil((screen.posY + screen.h * 0.5 + GENERATECHUNKOFSCREENOFSET) / CHUNKSIZEPX);
 
         // std::cout << "(" << minX << ", " << minY << "), (" << maxX << ", " << maxY <<  ")\n";
-        
+
         // checks which tiles to unload
-        for (int i = 0; i < chunks.size(); ++i) 
+        for (int i = 0; i < chunks.size(); ++i)
         {
-            if (chunks[i].x < minX || chunks[i].x > maxX || chunks[i].y < minY || chunks[i].y > maxY) {
+            if (chunks[i].x < minX || chunks[i].x > maxX || chunks[i].y < minY || chunks[i].y > maxY)
+            {
                 std::swap(chunks[i], chunks.back());
                 chunks.pop_back();
                 --i;
@@ -49,7 +53,7 @@ void loadChunks() {
         {
             for (int16_t y = minY; y < maxY + 1; ++y)
             {
-                for (int i = 0; i < chunks.size(); ++i) 
+                for (int i = 0; i < chunks.size(); ++i)
                 {
                     if (x == chunks[i].x && y == chunks[i].y)
                     {
@@ -59,12 +63,12 @@ void loadChunks() {
                 }
                 if (tempFlag)
                 {
-                chunks.emplace_back(chunk{});
-                chunks[chunks.size() - 1].loadChunk(x, y);
-                // if (!running) {
+                    chunks.emplace_back(chunk{});
+                    chunks[chunks.size() - 1].loadChunk(x, y);
+                    // if (!running) {
                     break;
-                // }
-                } 
+                    // }
+                }
                 tempFlag = 1;
             }
         }
@@ -72,10 +76,7 @@ void loadChunks() {
     }
 }
 
-void playerMovement() 
-{
-
-}
+void playerMovement() {}
 
 bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 {
@@ -114,7 +115,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     while (running)
     {
         inputs();
-        
+
         SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
         SDL_RenderClear(rend);
 
@@ -130,98 +131,86 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         screen.tempOfsetY = std::floor(screen.ofsetY - screen.posY);
 
         // checks if chunks are on the screen
-        for (int i = 0; i < chunks.size(); ++i) 
+        for (int i = 0; i < chunks.size(); ++i)
         {
             // loops through every tile in a chunk
             for (int x = 0; x < CHUNKSIZE; ++x)
             {
                 for (int y = 0; y < CHUNKSIZE; ++y)
                 {
-                    if (chunks[i].biome[x][y] == 0) {
+                    if (chunks[i].biome[x][y] == 0)
+                    {
                         clip.x = 48;
                     }
-                    else if (chunks[i].biome[x][y] == 1) {
+                    else if (chunks[i].biome[x][y] == 1)
+                    {
                         clip.x = 12;
                     }
-                    else if (chunks[i].biome[x][y] == 2) {
+                    else if (chunks[i].biome[x][y] == 2)
+                    {
                         clip.x = 24;
                     }
-                    else if (chunks[i].biome[x][y] == 3) {
+                    else if (chunks[i].biome[x][y] == 3)
+                    {
                         clip.x = 0;
                     }
-                    else if (chunks[i].biome[x][y] == 4) {
+                    else if (chunks[i].biome[x][y] == 4)
+                    {
                         clip.x = 60;
                     }
-                    else if (chunks[i].biome[x][y] == 5) {
+                    else if (chunks[i].biome[x][y] == 5)
+                    {
                         clip.x = 84;
                     }
-                    else if (chunks[i].biome[x][y] == 6) {
+                    else if (chunks[i].biome[x][y] == 6)
+                    {
                         clip.x = 96;
                     }
-                    else if (chunks[i].biome[x][y] == 7) {
+                    else if (chunks[i].biome[x][y] == 7)
+                    {
                         clip.x = 72;
                     }
-                    else if (chunks[i].biome[x][y] == 8) {
+                    else if (chunks[i].biome[x][y] == 8)
+                    {
                         clip.x = 36;
                     }
-                    else {
+                    else
+                    {
                         clip.x = 96;
                     }
 
                     if (chunks[i].tiles[x][y] == 1)
                     {
-                            // renders chunk
+                        // renders chunk
                         temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX;
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY;
                         SDL_RenderTexture(rend, texture, &clip, &temp);
                     }
                 }
-            }  
+            }
         }
 
         std::cout << chunks.size() << "\n";
 
-
-        // player rendering
-        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime * PLAYERSPEED * (1 - decay.pow255[deltaTime]);
-        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime * PLAYERSPEED * (1 - decay.pow255[deltaTime]);
-
         player.VectX *= decay.pow255[deltaTime];
         player.VectY *= decay.pow255[deltaTime];
 
-        if (player.VectX > 0) {
-            player.VectX -= deltaTime * 0.03125;
-            if (player.VectX < 0) {
-                player.VectX = 0;
-            }
-        }
-        if (player.VectX < 0) {
-            player.VectX += deltaTime * 0.03125;
-            if (player.VectX > 0) {
-                player.VectX = 0;
-            }
-        }
-        if (player.VectY > 0) {
-            player.VectY -= deltaTime * 0.03125;
-            if (player.VectY < 0) {
-                player.VectY = 0;
-            }
-        }
-        if (player.VectY < 0) {
-            player.VectY += deltaTime * 0.03125;
-            if (player.VectY > 0) {
-                player.VectY = 0;
-            }
-        }
-
+        // player rendering
+        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime *
+            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
+        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime *
+            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
 
 
         // clamps the player speed
-        if (abs((key.d || key.rightArrow) - (key.a || key.leftArrow)) + abs((key.s || key.downArrow) - (key.w || key.upArrow)) > 1) {
+        if (abs((key.d || key.rightArrow) - (key.a || key.leftArrow)) +
+                abs((key.s || key.downArrow) - (key.w || key.upArrow)) >
+            1)
+        {
             player.x += player.VectX * 0.72;
             player.y += player.VectY * 0.72;
         }
-        else 
+        else
         {
             player.x += player.VectX;
             player.y += player.VectY;

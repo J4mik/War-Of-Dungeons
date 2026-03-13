@@ -9,7 +9,7 @@
 #include "chunkgen.hpp"
 
 
-#define TILESIZE 24
+#define TILESIZE 8
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
 
@@ -43,13 +43,14 @@ public:
         }
         m_stored = false;
     }
-    void storeChunk() {
+    void storeChunk()
+    {
         if (!m_stored)
         {
-            m_stored = true; 
+            m_stored = true;
         }
     }
-    void loadChunk(int16_t posX, int16_t posY) 
+    void loadChunk(int16_t posX, int16_t posY)
     {
         m_stored = true;
 
