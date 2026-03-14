@@ -9,7 +9,7 @@
 #include "chunkgen.hpp"
 
 
-#define TILESIZE 4
+#define TILESIZE 32
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
 
@@ -20,25 +20,46 @@ public:
     int16_t y;
 };
 
+position tilegridpos[16] = {
+    {0, 48}, {16, 48}, {0, 0}, {48, 0},
+    {0, 32}, {16, 0}, {32, 48}, {16, 16},
+    {48, 48}, {0, 16}, {48, 32}, {32, 0},
+    {16, 32}, {32, 32}, {48, 16}, {32, 16}
+};
+
+uint16_t tilesTemp[CHUNKSIZE + 2][CHUNKSIZE + 2] = {};
+
 class chunk
 {
 public:
     int16_t x; // multiplied by 8 to save unecessary bytes that would be wasted by storing as a multiple of 8
     int16_t y;
-    bool tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
-    int biome[CHUNKSIZE][CHUNKSIZE] = {};
+    uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
+    char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
+    int m_biome[CHUNKSIZE][CHUNKSIZE] = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
         int32_t startY = CHUNKSIZE * y;
+
+        for (std::int32_t tileX = 0; tileX < CHUNKSIZE + 2; ++tileX)
+        {
+            for (std::int32_t tileY = 0; tileY < CHUNKSIZE + 2; ++tileY)
+            {
+                tilesTemp[tileX][tileY] = calculateTile(startX + tileX, startY + tileY);
+            }
+        }
 
 
         for (std::int32_t tileX = 0; tileX < CHUNKSIZE; ++tileX)
         {
             for (std::int32_t tileY = 0; tileY < CHUNKSIZE; ++tileY)
             {
-                tiles[tileX][tileY] = calculateTile(startX + tileX, startY + tileY);
-                biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY);
+                m_tiles[tileX][tileY] = 1; // calculateTile(startX + tileX, startY + tileY);
+                m_biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY);
+                m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 +
+                tilesTemp[tileX + 1][tileY] * 4 + tilesTemp[tileX][tileY + 1] * 2 + 
+                tilesTemp[tileX + 1][tileY + 1];
             }
         }
         m_stored = false;

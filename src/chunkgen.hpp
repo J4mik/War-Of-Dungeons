@@ -17,7 +17,7 @@
 #define OCTAVES 6 // has to be between 1 and 16
 #define SPAGHETTITHRESHOLD -0.82
 #define SWISSCHEESETHRESHOLD 0.54
-#define SEED 69
+#define SEED 71
 
 // generates values for spaghetti caves
 double calculateSpaghettiCave(std::int32_t x, std::int32_t y)

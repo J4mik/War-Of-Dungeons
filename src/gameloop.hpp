@@ -88,12 +88,15 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         return 0;
     }
 
-    SDL_FRect clip{0, 0, 12, 12};
+    SDL_FRect clip{0, 0, 16, 16};
     SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
     SDL_FRect playerPos{0, 0, 12, 20};
 
     SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+
+    SDL_Texture* grass = IMG_LoadTexture(rend, "data/images/DemoSandTiles.png");
+    SDL_SetTextureScaleMode(grass, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
     SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
@@ -125,7 +128,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
         SDL_RenderClear(rend);
 
-        SDL_SetRenderDrawColor(rend, 30, 32, 33, 255);
+        SDL_SetRenderDrawColor(rend, 30, 100, 255, 255);
 
 
         // tile rendering
@@ -144,53 +147,59 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
             {
                 for (int y = 0; y < CHUNKSIZE; ++y)
                 {
-                    if (chunks[i].biome[x][y] == 0)
-                    {
-                        clip.x = 48;
-                    }
-                    else if (chunks[i].biome[x][y] == 1)
-                    {
-                        clip.x = 12;
-                    }
-                    else if (chunks[i].biome[x][y] == 2)
-                    {
-                        clip.x = 24;
-                    }
-                    else if (chunks[i].biome[x][y] == 3)
-                    {
-                        clip.x = 0;
-                    }
-                    else if (chunks[i].biome[x][y] == 4)
-                    {
-                        clip.x = 60;
-                    }
-                    else if (chunks[i].biome[x][y] == 5)
-                    {
-                        clip.x = 84;
-                    }
-                    else if (chunks[i].biome[x][y] == 6)
-                    {
-                        clip.x = 96;
-                    }
-                    else if (chunks[i].biome[x][y] == 7)
-                    {
-                        clip.x = 72;
-                    }
-                    else if (chunks[i].biome[x][y] == 8)
-                    {
-                        clip.x = 36;
-                    }
-                    else
-                    {
-                        clip.x = 96;
-                    }
+                    // if (chunks[i].m_biome[x][y] == 0)
+                    // {
+                    //     clip.x = 48;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 1)
+                    // {
+                    //     clip.x = 12;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 2)
+                    // {
+                    //     clip.x = 24;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 3)
+                    // {
+                    //     clip.x = 0;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 4)
+                    // {
+                    //     clip.x = 60;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 5)
+                    // {
+                    //     clip.x = 84;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 6)
+                    // {
+                    //     clip.x = 96;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 7)
+                    // {
+                    //     clip.x = 72;
+                    // }
+                    // else if (chunks[i].m_biome[x][y] == 8)
+                    // {
+                    //     clip.x = 36;
+                    // }
+                    // else
+                    // {
+                    //     clip.x = 96;
+                    // }
 
-                    if (chunks[i].tiles[x][y] == 1)
+
+
+                    if (chunks[i].m_tiles[x][y] == 1)
                     {
                         // renders chunk
                         temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX;
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY;
-                        SDL_RenderTexture(rend, texture, &clip, &temp);
+                        clip.x = tilegridpos[chunks[i].m_tilegrid[x][y]].x;
+                        clip.y = tilegridpos[chunks[i].m_tilegrid[x][y]].y;
+                        clip.w = 16;
+                        clip.h = 16;
+                        SDL_RenderTexture(rend, grass, &clip, &temp);
                     }
                 }
             }
