@@ -12,12 +12,12 @@
 
 #define SPAGETTIFREQUENCY 0.016
 
-#define CAVETRANSITIONFREQUENCY 0.004
+#define CAVETRANSITIONFREQUENCY 0.0018
 
-#define OCTAVES 6 // has to be between 1 and 16
+#define OCTAVES 5 // has to be between 1 and 16
 #define SPAGHETTITHRESHOLD -0.82
 #define SWISSCHEESETHRESHOLD 0.54
-#define SEED 71
+#define SEED 72
 
 // generates values for spaghetti caves
 double calculateSpaghettiCave(std::int32_t x, std::int32_t y)
@@ -57,12 +57,13 @@ int generateBiome(std::int32_t x, std::int32_t y)
             if (weirdness < 0.67)
             {
                 return 1;
+                // desert
             }
             else
             {
                 return 6;
+                // messa
             }
-            // desert
         }
         else if (humidity < 0.63)
         {
@@ -95,11 +96,18 @@ int generateBiome(std::int32_t x, std::int32_t y)
     }
     else
     {
-        if (humidity > 0.63)
+        if (humidity < 0.38)
+        {
+            return 7;
+            // snow lands
+        }
+        else if (humidity > 0.63)
         {
             return 8;
+            // frozen lake
         }
-        return 7;
+        return 9;
+        // thundra
     }
     return 0;
 }
@@ -109,7 +117,7 @@ bool calculateTile(std::int32_t x, std::int32_t y)
 {
     const siv::PerlinNoise perlin{SEED + 2};
 
-    double multiplier = perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.3;
+    double multiplier = perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.15;
 
     double value = multiplier * calculateSpaghettiCave(x, y) + (1 - multiplier) * calculateSwissCheeseCave(x, y);
 

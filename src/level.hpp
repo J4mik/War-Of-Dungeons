@@ -9,9 +9,10 @@
 #include "chunkgen.hpp"
 
 
-#define TILESIZE 32
+#define TILESIZE 8
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
+#define HALFTILESIZE (TILESIZE >> 1)
 
 class position
 {
@@ -27,7 +28,7 @@ position tilegridpos[16] = {
     {16, 32}, {32, 32}, {48, 16}, {32, 16}
 };
 
-uint16_t tilesTemp[CHUNKSIZE + 2][CHUNKSIZE + 2] = {};
+uint16_t tilesTemp[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
 
 class chunk
 {
@@ -36,15 +37,15 @@ public:
     int16_t y;
     uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
-    int m_biome[CHUNKSIZE][CHUNKSIZE] = {};
+    uint16_t m_biome[CHUNKSIZE][CHUNKSIZE] = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
         int32_t startY = CHUNKSIZE * y;
 
-        for (std::int32_t tileX = 0; tileX < CHUNKSIZE + 2; ++tileX)
+        for (std::int32_t tileX = 0; tileX < CHUNKSIZE + 1; ++tileX)
         {
-            for (std::int32_t tileY = 0; tileY < CHUNKSIZE + 2; ++tileY)
+            for (std::int32_t tileY = 0; tileY < CHUNKSIZE + 1; ++tileY)
             {
                 tilesTemp[tileX][tileY] = calculateTile(startX + tileX, startY + tileY);
             }
@@ -55,8 +56,9 @@ public:
         {
             for (std::int32_t tileY = 0; tileY < CHUNKSIZE; ++tileY)
             {
-                m_tiles[tileX][tileY] = 1; // calculateTile(startX + tileX, startY + tileY);
+                // m_tiles[tileX][tileY] = tilesTemp[tileX][tileY];
                 m_biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY);
+                m_tiles[tileX][tileY] = m_biome[tileX][tileY];
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 +
                 tilesTemp[tileX + 1][tileY] * 4 + tilesTemp[tileX][tileY + 1] * 2 + 
                 tilesTemp[tileX + 1][tileY + 1];
