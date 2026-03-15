@@ -9,10 +9,10 @@
 #include "chunkgen.hpp"
 
 
-#define TILESIZE 8
+#define TILESIZE 32
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
-#define HALFTILESIZE (TILESIZE >> 1)
+#define HALFTILESIZE (TILESIZE * 0.5)
 
 class position
 {
