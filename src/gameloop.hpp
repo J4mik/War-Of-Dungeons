@@ -186,6 +186,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     if (chunks[i].m_biome[x][y] == 0)
                     {
                         tempTexture = dirt;
+                        tempTextureMask = dirtMask;
                     }
                     else if (chunks[i].m_biome[x][y] == 1)
                     {
@@ -238,9 +239,20 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         clip.w = 16;
                         clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
-                        SDL_RenderTexture(rend, tempTextureMask, &clip, &temp);
                     }
                 }
+            }
+            for (uint8_t n = 0; n < chunks[i].m_mask.size(); ++n)
+            {
+                temp.x =
+                    (chunks[i].m_mask[n].x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE;
+                temp.y =
+                    (chunks[i].m_mask[n].y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
+                clip.x = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].x;
+                clip.y = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].y;
+                clip.w = 16;
+                clip.h = 16;
+                SDL_RenderTexture(rend, dirtMask, &clip, &temp);
             }
         }
 

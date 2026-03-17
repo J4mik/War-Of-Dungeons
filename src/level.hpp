@@ -34,7 +34,7 @@ public:
     uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE][CHUNKSIZE] = {};
-    char m_mask[CHUNKSIZE][CHUNKSIZE] = {};
+    std::vector<position> m_mask = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
@@ -58,7 +58,10 @@ public:
                 m_tiles[tileX][tileY] = m_biome[tileX][tileY];
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 + tilesTemp[tileX + 1][tileY] * 4 +
                     tilesTemp[tileX][tileY + 1] * 2 + tilesTemp[tileX + 1][tileY + 1];
-                m_mask[tileX][tileY] = m_tilegrid[tileX][tileY];
+                if (m_tilegrid[tileX][tileY] != 0 && m_tilegrid[tileX][tileY] != 15)
+                {
+                    m_mask.emplace_back(position{tileX, tileY});
+                }
             }
         }
         m_stored = false;
