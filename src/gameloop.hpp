@@ -96,6 +96,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     // SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* tempTexture;
+    SDL_Texture* tempTextureMask;
 
     SDL_Texture* grass = IMG_LoadTexture(rend, "data/images/GrassTiles.png");
     SDL_SetTextureScaleMode(grass, SDL_SCALEMODE_NEAREST);
@@ -106,11 +107,17 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_Texture* darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
     SDL_SetTextureScaleMode(darkGrass, SDL_SCALEMODE_NEAREST);
 
+    SDL_Texture* darkGrassMask = IMG_LoadTexture(rend, "data/images/DarkGrassMask.png");
+    SDL_SetTextureScaleMode(darkGrassMask, SDL_SCALEMODE_NEAREST);
+
     SDL_Texture* ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
     SDL_SetTextureScaleMode(ice, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
     SDL_SetTextureScaleMode(dirt, SDL_SCALEMODE_NEAREST);
+
+    SDL_Texture* dirtMask = IMG_LoadTexture(rend, "data/images/DirtMask.png");
+    SDL_SetTextureScaleMode(dirtMask, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
     SDL_SetTextureScaleMode(snow, SDL_SCALEMODE_NEAREST);
@@ -199,6 +206,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     else if (chunks[i].m_biome[x][y] == 5)
                     {
                         tempTexture = dirt;
+                        tempTextureMask = dirtMask;
                     }
                     else if (chunks[i].m_biome[x][y] == 6)
                     {
@@ -215,10 +223,13 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     else if (chunks[i].m_biome[x][y] == 9)
                     {
                         tempTexture = darkGrass;
+                        tempTextureMask = darkGrassMask;
                     }
 
                     if (chunks[i].m_tilegrid[x][y] != 0)
                     {
+                        // tempTexture = darkGrass;
+
                         // renders chunk
                         temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE;
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
@@ -227,6 +238,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         clip.w = 16;
                         clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
+                        SDL_RenderTexture(rend, tempTextureMask, &clip, &temp);
                     }
                 }
             }
