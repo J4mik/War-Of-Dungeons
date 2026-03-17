@@ -178,6 +178,19 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         // checks if chunks are on the screen
         for (int i = 0; i < chunks.size(); ++i)
         {
+
+            for (uint8_t n = 0; n < chunks[i].m_underlay.size(); ++n)
+            {
+                temp.x = (chunks[i].m_underlay[n].x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX +
+                    HALFTILESIZE;
+                temp.y = (chunks[i].m_underlay[n].y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY +
+                    HALFTILESIZE;
+                clip.x = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_underlay[n].x][chunks[i].m_underlay[n].y]].x;
+                clip.y = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_underlay[n].x][chunks[i].m_underlay[n].y]].y;
+                clip.x = 32;
+                clip.y = 16;
+                SDL_RenderTexture(rend, sand, &clip, &temp);
+            }
             // loops through every tile in a chunk
             for (int x = 0; x < CHUNKSIZE; ++x)
             {
@@ -236,8 +249,6 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
                         clip.x = tilegridpos[chunks[i].m_tilegrid[x][y]].x;
                         clip.y = tilegridpos[chunks[i].m_tilegrid[x][y]].y;
-                        clip.w = 16;
-                        clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
                     }
                 }
@@ -250,8 +261,6 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     (chunks[i].m_mask[n].y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
                 clip.x = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].x;
                 clip.y = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].y;
-                clip.w = 16;
-                clip.h = 16;
                 SDL_RenderTexture(rend, dirtMask, &clip, &temp);
             }
         }
