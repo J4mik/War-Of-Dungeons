@@ -68,13 +68,13 @@ public:
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 + tilesTemp[tileX + 1][tileY] * 4 +
                     tilesTemp[tileX][tileY + 1] * 2 + tilesTemp[tileX + 1][tileY + 1];
 
-                if ( // m_tilegrid[tileX][tileY] != 0 && m_tilegrid[tileX][tileY] != 15 &&
-                    !(tilesTemp[tileX][tileY] == tilesTemp[tileX][tileY + 1] &&
-                      tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY] &&
-                      tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY + 1]))
-                {
-                    m_mask.emplace_back(position{tileX, tileY});
-                }
+                // if ( // m_tilegrid[tileX][tileY] != 0 && m_tilegrid[tileX][tileY] != 15 &&
+                //     !(tilesTemp[tileX][tileY] == tilesTemp[tileX][tileY + 1] &&
+                //       tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY] &&
+                //       tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY + 1]))
+                // {
+                //     m_mask.emplace_back(position{tileX, tileY});
+                // }
 
 
                 // if (tilesTemp[tileX][tileY] || tilesTemp[tileX + 1][tileY] || tilesTemp[tileX][tileY + 1] ||

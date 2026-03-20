@@ -3,14 +3,14 @@
 #include "../include/perlin/perlin.hpp"
 
 
-#define FREQUENCY1 0.008 // should be between 0.1 and 64
+#define FREQUENCY1 0.004 // should be between 0.1 and 64
 #define MULTIPLIER1 0.7
-#define FREQUENCY2 0.03 // should be between 0.1 and 64
+#define FREQUENCY2 0.02 // should be between 0.1 and 64
 #define MULTIPLIER2 0.15
-#define FREQUENCY3 0.0015 // should be between 0.1 and 64
+#define FREQUENCY3 0.001 // should be between 0.1 and 64
 #define MULTIPLIER3 0.15
 
-#define SPAGETTIFREQUENCY 0.016
+#define SPAGETTIFREQUENCY 0.006
 
 #define CAVETRANSITIONFREQUENCY 0.0018
 
