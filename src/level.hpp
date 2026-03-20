@@ -8,25 +8,22 @@
 
 #include "chunkgen.hpp"
 
+std::basic_string<char> levelPath
 
 #define TILESIZE 32
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
 #define HALFTILESIZE (TILESIZE * 0.5)
 
-class position
+    class position
 {
 public:
     int16_t x;
     int16_t y;
 };
 
-position tilegridpos[16] = {
-    {0, 48}, {16, 48}, {0, 0}, {48, 0},
-    {0, 32}, {16, 0}, {32, 48}, {16, 16},
-    {48, 48}, {0, 16}, {48, 32}, {32, 0},
-    {16, 32}, {32, 32}, {48, 16}, {32, 16}
-};
+position tilegridpos[16] = {{0, 48},  {16, 48}, {0, 0},   {48, 0}, {0, 32},  {16, 0},  {32, 48}, {16, 16},
+                            {48, 48}, {0, 16},  {48, 32}, {32, 0}, {16, 32}, {32, 32}, {48, 16}, {32, 16}};
 
 uint16_t tilesTemp[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
 
@@ -59,9 +56,8 @@ public:
                 // m_tiles[tileX][tileY] = tilesTemp[tileX][tileY];
                 m_biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY);
                 m_tiles[tileX][tileY] = m_biome[tileX][tileY];
-                m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 +
-                tilesTemp[tileX + 1][tileY] * 4 + tilesTemp[tileX][tileY + 1] * 2 + 
-                tilesTemp[tileX + 1][tileY + 1];
+                m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 + tilesTemp[tileX + 1][tileY] * 4 +
+                    tilesTemp[tileX][tileY + 1] * 2 + tilesTemp[tileX + 1][tileY + 1];
             }
         }
         m_stored = false;
@@ -70,6 +66,33 @@ public:
     {
         if (!m_stored)
         {
+            std::ifstream FileStream;
+            FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try
+            {
+                FileStream.open(levelPath, std::ios::in | std::ios::binary);
+                for (int i = 0; i < 1024; ++i)
+                {
+                    FileStream.read((char*)&pow255[i], 8);
+                }
+                FileStream.close();
+            }
+            catch (std::ifstream::failure& error)
+            {
+                if (!pow255[0] == 1)
+                {
+                    std::ofstream FileStream;
+                    FileStream.open(levelPath, std::ios::out | std::ios::binary);
+                    pow255[0] = 1;
+                    FileStream.write((char*)&pow255[0], 8);
+                    for (int i = 1; i < 1024; ++i)
+                    {
+                        pow255[i] = pow255[i - 1] * 0.985;
+                        FileStream.write((char*)&pow255[i], 8);
+                    }
+                    FileStream.close();
+                }
+            }
             m_stored = true;
         }
     }
