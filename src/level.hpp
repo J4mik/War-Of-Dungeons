@@ -42,8 +42,8 @@ public:
     uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
-    std::vector<tile> m_underlay = {};
-    std::vector<position> m_mask = {};
+    // std::vector<tile> m_underlay = {};
+    // std::vector<position> m_mask = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
@@ -77,17 +77,20 @@ public:
                 }
 
 
-                if (tilesTemp[tileX][tileY] && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX + 1][tileY + 1])
-                {
-                    m_tilegrid[tileX][tileY] = 8 + (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) * 4 +
-                        (m_biome[tileX][tileY] == m_biome[tileX][tileY + 1]) * 2 +
-                        (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]);
-                    m_tiles[tileX][tileY] = m_biome[tileX - 1][tileY];
-                    m_underlay.emplace_back(tile{tileX, tileY, m_biome[tileX + 1][tileY]});
-
-                    // m_tilegrid[tileX][tileY] = 15;
-                }
+                // if (tilesTemp[tileX][tileY] || tilesTemp[tileX + 1][tileY] || tilesTemp[tileX][tileY + 1] ||
+                //     tilesTemp[tileX + 1][tileY + 1])
+                // {
+                //     if (m_tilegrid[tileX][tileY] !=
+                //         8 + (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) * 4 +
+                //             (m_biome[tileX][tileY] == m_biome[tileX][tileY + 1]) * 2 +
+                //             (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]))
+                //     {
+                //         m_tilegrid[tileX][tileY] = 0;
+                //     }
+                //     m_tiles[tileX][tileY] = m_biome[tileX - 1][tileY];
+                //     m_underlay.emplace_back(tile{tileX, tileY, m_biome[tileX + 1][tileY]});
+                //     // m_tilegrid[tileX][tileY] = 15;
+                // }
             }
         }
         m_stored = false;
