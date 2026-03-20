@@ -8,13 +8,14 @@
 
 #include "chunkgen.hpp"
 
+std::basic_string<char> levelPath
 
 #define TILESIZE 32
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
 #define HALFTILESIZE (TILESIZE * 0.5)
 
-class position
+    class position
 {
 public:
     int16_t x;
@@ -99,6 +100,33 @@ public:
     {
         if (!m_stored)
         {
+            std::ifstream FileStream;
+            FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try
+            {
+                FileStream.open(levelPath, std::ios::in | std::ios::binary);
+                for (int i = 0; i < 1024; ++i)
+                {
+                    FileStream.read((char*)&pow255[i], 8);
+                }
+                FileStream.close();
+            }
+            catch (std::ifstream::failure& error)
+            {
+                if (!pow255[0] == 1)
+                {
+                    std::ofstream FileStream;
+                    FileStream.open(levelPath, std::ios::out | std::ios::binary);
+                    pow255[0] = 1;
+                    FileStream.write((char*)&pow255[0], 8);
+                    for (int i = 1; i < 1024; ++i)
+                    {
+                        pow255[i] = pow255[i - 1] * 0.985;
+                        FileStream.write((char*)&pow255[i], 8);
+                    }
+                    FileStream.close();
+                }
+            }
             m_stored = true;
         }
     }
