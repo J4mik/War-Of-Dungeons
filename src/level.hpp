@@ -32,6 +32,8 @@ public:
 position tilegridpos[16] = {{0, 48},  {16, 48}, {0, 0},   {48, 0}, {0, 32},  {16, 0},  {32, 48}, {16, 16},
                             {48, 48}, {0, 16},  {48, 32}, {32, 0}, {16, 32}, {32, 32}, {48, 16}, {32, 16}};
 
+position overlaylookup[8] = {{48, 48}, {0, 16},  {48, 32}, {32, 0}, {16, 32}, {32, 32}, {48, 16}, {32, 16}};
+
 bool tilesTemp[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
 
 class chunk
@@ -42,6 +44,7 @@ public:
     uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
+    bool m_overlay[CHUNKSIZE][CHUNKSIZE] = {};
     // std::vector<tile> m_underlay = {};
     // std::vector<position> m_mask = {};
     void generateChunk()
@@ -68,29 +71,17 @@ public:
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 + tilesTemp[tileX + 1][tileY] * 4 +
                     tilesTemp[tileX][tileY + 1] * 2 + tilesTemp[tileX + 1][tileY + 1];
 
-                // if ( // m_tilegrid[tileX][tileY] != 0 && m_tilegrid[tileX][tileY] != 15 &&
-                //     !(tilesTemp[tileX][tileY] == tilesTemp[tileX][tileY + 1] &&
-                //       tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY] &&
-                //       tilesTemp[tileX][tileY] == tilesTemp[tileX + 1][tileY + 1]))
-                // {
-                //     m_mask.emplace_back(position{tileX, tileY});
-                // }
+
+                if (tilesTemp[tileX][tileY] && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
+                    tilesTemp[tileX + 1][tileY + 1])
+                {
+                    
+                        m_overlay[tileX][tileY] = (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) &&
+                            (m_biome[tileX][tileY] == m_biome[tileX][tileY + 1]) &&
+                            (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY + 1]);
 
 
-                // if (tilesTemp[tileX][tileY] || tilesTemp[tileX + 1][tileY] || tilesTemp[tileX][tileY + 1] ||
-                //     tilesTemp[tileX + 1][tileY + 1])
-                // {
-                //     if (m_tilegrid[tileX][tileY] !=
-                //         8 + (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) * 4 +
-                //             (m_biome[tileX][tileY] == m_biome[tileX][tileY + 1]) * 2 +
-                //             (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]))
-                //     {
-                //         m_tilegrid[tileX][tileY] = 0;
-                //     }
-                //     m_tiles[tileX][tileY] = m_biome[tileX - 1][tileY];
-                //     m_underlay.emplace_back(tile{tileX, tileY, m_biome[tileX + 1][tileY]});
-                //     // m_tilegrid[tileX][tileY] = 15;
-                // }
+                }
             }
         }
         m_stored = false;
