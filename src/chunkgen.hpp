@@ -17,7 +17,7 @@
 #define OCTAVES 5 // has to be between 1 and 16
 #define SPAGHETTITHRESHOLD -0.82
 #define SWISSCHEESETHRESHOLD 0.54
-#define SEED 72
+#define SEED 67
 
 // generates values for spaghetti caves
 double calculateSpaghettiCave(std::int32_t x, std::int32_t y)
@@ -117,7 +117,8 @@ bool calculateTile(std::int32_t x, std::int32_t y)
 {
     const siv::PerlinNoise perlin{SEED + 2};
 
-    double multiplier = perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.15;
+    double multiplier =
+        perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.15;
 
     double value = multiplier * calculateSpaghettiCave(x, y) + (1 - multiplier) * calculateSwissCheeseCave(x, y);
 
