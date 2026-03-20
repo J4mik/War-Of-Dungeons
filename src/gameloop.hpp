@@ -96,6 +96,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     // SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* tempTexture;
+    SDL_Texture* tempTextureMask;
 
     SDL_Texture* grass = IMG_LoadTexture(rend, "data/images/GrassTiles.png");
     SDL_SetTextureScaleMode(grass, SDL_SCALEMODE_NEAREST);
@@ -106,11 +107,17 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_Texture* darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
     SDL_SetTextureScaleMode(darkGrass, SDL_SCALEMODE_NEAREST);
 
+    SDL_Texture* darkGrassMask = IMG_LoadTexture(rend, "data/images/DarkGrassMask.png");
+    SDL_SetTextureScaleMode(darkGrassMask, SDL_SCALEMODE_NEAREST);
+
     SDL_Texture* ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
     SDL_SetTextureScaleMode(ice, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
     SDL_SetTextureScaleMode(dirt, SDL_SCALEMODE_NEAREST);
+
+    SDL_Texture* dirtMask = IMG_LoadTexture(rend, "data/images/DirtMask.png");
+    SDL_SetTextureScaleMode(dirtMask, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
     SDL_SetTextureScaleMode(snow, SDL_SCALEMODE_NEAREST);
@@ -171,6 +178,19 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
         // checks if chunks are on the screen
         for (int i = 0; i < chunks.size(); ++i)
         {
+
+            // for (uint8_t n = 0; n < chunks[i].m_underlay.size(); ++n)
+            // {
+            //     temp.x = (chunks[i].m_underlay[n].x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX +
+            //         HALFTILESIZE;
+            //     temp.y = (chunks[i].m_underlay[n].y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY +
+            //         HALFTILESIZE;
+            //     clip.x = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_underlay[n].x][chunks[i].m_underlay[n].y]].x;
+            //     clip.y = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_underlay[n].x][chunks[i].m_underlay[n].y]].y;
+            //     clip.x = 32;
+            //     clip.y = 16;
+            //     SDL_RenderTexture(rend, grass, &clip, &temp);
+            // }
             // loops through every tile in a chunk
             for (int x = 0; x < CHUNKSIZE; ++x)
             {
@@ -179,6 +199,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     if (chunks[i].m_biome[x][y] == 0)
                     {
                         tempTexture = dirt;
+                        tempTextureMask = dirtMask;
                     }
                     else if (chunks[i].m_biome[x][y] == 1)
                     {
@@ -199,6 +220,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     else if (chunks[i].m_biome[x][y] == 5)
                     {
                         tempTexture = dirt;
+                        tempTextureMask = dirtMask;
                     }
                     else if (chunks[i].m_biome[x][y] == 6)
                     {
@@ -215,20 +237,31 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                     else if (chunks[i].m_biome[x][y] == 9)
                     {
                         tempTexture = darkGrass;
+                        tempTextureMask = darkGrassMask;
                     }
 
                     if (chunks[i].m_tilegrid[x][y] != 0)
                     {
+                        // tempTexture = darkGrass;
+
                         // renders chunk
                         temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE;
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
                         clip.x = tilegridpos[chunks[i].m_tilegrid[x][y]].x;
                         clip.y = tilegridpos[chunks[i].m_tilegrid[x][y]].y;
-                        clip.w = 16;
-                        clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
                     }
                 }
+            }
+            for (uint8_t n = 0; n < chunks[i].m_mask.size(); ++n)
+            {
+                temp.x =
+                    (chunks[i].m_mask[n].x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE;
+                temp.y =
+                    (chunks[i].m_mask[n].y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
+                clip.x = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].x;
+                clip.y = tilegridpos[chunks[i].m_tilegrid[chunks[i].m_mask[n].x][chunks[i].m_mask[n].y]].y;
+                SDL_RenderTexture(rend, dirtMask, &clip, &temp);
             }
         }
 
