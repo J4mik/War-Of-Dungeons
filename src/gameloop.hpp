@@ -107,17 +107,11 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_Texture* darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
     SDL_SetTextureScaleMode(darkGrass, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* darkGrassMask = IMG_LoadTexture(rend, "data/images/DarkGrassMask.png");
-    SDL_SetTextureScaleMode(darkGrassMask, SDL_SCALEMODE_NEAREST);
-
     SDL_Texture* ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
     SDL_SetTextureScaleMode(ice, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
     SDL_SetTextureScaleMode(dirt, SDL_SCALEMODE_NEAREST);
-
-    SDL_Texture* dirtMask = IMG_LoadTexture(rend, "data/images/DirtMask.png");
-    SDL_SetTextureScaleMode(dirtMask, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
     SDL_SetTextureScaleMode(snow, SDL_SCALEMODE_NEAREST);
