@@ -44,9 +44,7 @@ public:
     uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
-    bool m_overlay[CHUNKSIZE][CHUNKSIZE] = {};
-    // std::vector<tile> m_underlay = {};
-    // std::vector<position> m_mask = {};
+    char m_overlay[CHUNKSIZE][CHUNKSIZE] = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
@@ -76,10 +74,21 @@ public:
                     tilesTemp[tileX + 1][tileY + 1])
                 {
                     
-                        m_overlay[tileX][tileY] = (m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) &&
+                        m_overlay[tileX][tileY] = 8 * ((m_biome[tileX][tileY] == m_biome[tileX + 1][tileY]) &&
                             (m_biome[tileX][tileY] == m_biome[tileX][tileY + 1]) &&
-                            (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY + 1]);
+                            (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY + 1]));
 
+                        m_overlay[tileX][tileY] += 4 * ((m_biome[tileX + 1][tileY] == m_biome[tileX][tileY]) &&
+                            (m_biome[tileX + 1][tileY] == m_biome[tileX + 1][tileY + 1]) &&
+                            (m_biome[tileX + 1][tileY] != m_biome[tileX][tileY + 1]));
+
+                        m_overlay[tileX][tileY] += 2 * ((m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY + 1]) &&
+                            (m_biome[tileX][tileY + 1] == m_biome[tileX][tileY]) &&
+                            (m_biome[tileX][tileY + 1] != m_biome[tileX + 1][tileY]));
+
+                        m_overlay[tileX][tileY] += ((m_biome[tileX + 1][tileY + 1] == m_biome[tileX + 1][tileY]) &&
+                            (m_biome[tileX + 1][tileY + 1] == m_biome[tileX][tileY + 1]) &&
+                            (m_biome[tileX + 1][tileY + 1] != m_biome[tileX][tileY]));
 
                 }
             }

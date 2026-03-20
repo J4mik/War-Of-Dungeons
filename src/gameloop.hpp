@@ -27,6 +27,28 @@ int spawnY = 0;
 
 bool tempFlag = 1;
 
+SDL_Texture* tempTexture;
+
+SDL_Texture* grass;
+
+    SDL_Texture* livelyGrass;
+
+    SDL_Texture* darkGrass;
+
+    SDL_Texture* ice;
+
+    SDL_Texture* dirt;
+
+    SDL_Texture* snow;
+
+    SDL_Texture* sand;
+
+    SDL_Texture* redSand;
+
+    SDL_Texture* stone;
+
+    SDL_Texture* playerTexture;
+
 void loadChunks()
 {
     while (running)
@@ -81,6 +103,49 @@ void loadChunks()
 
 void playerMovement() {}
 
+void getTile(uint8_t tile) {
+    if (tile == 0)
+                    {
+                        tempTexture = dirt;
+                    }
+                    else if (tile == 1)
+                    {
+                        tempTexture = sand;
+                    }
+                    else if (tile == 2)
+                    {
+                        tempTexture = livelyGrass;
+                    }
+                    else if (tile == 3)
+                    {
+                        tempTexture = stone;
+                    }
+                    else if (tile == 4)
+                    {
+                        tempTexture = grass;
+                    }
+                    else if (tile == 5)
+                    {
+                        tempTexture = dirt;
+                    }
+                    else if (tile == 6)
+                    {
+                        tempTexture = redSand;
+                    }
+                    else if (tile == 7)
+                    {
+                        tempTexture = snow;
+                    }
+                    else if (tile == 8)
+                    {
+                        tempTexture = ice;
+                    }
+                    else if (tile == 9)
+                    {
+                        tempTexture = darkGrass;
+                    }
+}
+
 bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
 {
     if (!running)
@@ -95,34 +160,34 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     // SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
     // SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* tempTexture;
-    SDL_Texture* tempTextureMask;
+    SDL_FRect tempOverlay{0, 0, 16, 16};
+    SDL_FRect clipOverlay{0, 0, 8, 8};
 
-    SDL_Texture* grass = IMG_LoadTexture(rend, "data/images/GrassTiles.png");
+    grass = IMG_LoadTexture(rend, "data/images/GrassTiles.png");
     SDL_SetTextureScaleMode(grass, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* livelyGrass = IMG_LoadTexture(rend, "data/images/LivelyGrassTiles.png");
+    livelyGrass = IMG_LoadTexture(rend, "data/images/LivelyGrassTiles.png");
     SDL_SetTextureScaleMode(livelyGrass, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
+    darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
     SDL_SetTextureScaleMode(darkGrass, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
+    ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
     SDL_SetTextureScaleMode(ice, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
+    dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
     SDL_SetTextureScaleMode(dirt, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
+    snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
     SDL_SetTextureScaleMode(snow, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* sand = IMG_LoadTexture(rend, "data/images/SandTiles.png");
+    sand = IMG_LoadTexture(rend, "data/images/SandTiles.png");
     SDL_SetTextureScaleMode(sand, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* redSand = IMG_LoadTexture(rend, "data/images/RedSandTiles.png");
+    redSand = IMG_LoadTexture(rend, "data/images/RedSandTiles.png");
     SDL_SetTextureScaleMode(redSand, SDL_SCALEMODE_NEAREST);
 
-    SDL_Texture* stone = IMG_LoadTexture(rend, "data/images/StoneTiles.png");
+    stone = IMG_LoadTexture(rend, "data/images/StoneTiles.png");
     SDL_SetTextureScaleMode(stone, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
@@ -190,46 +255,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
             {
                 for (int y = 0; y < CHUNKSIZE; ++y)
                 {
-                    if (chunks[i].m_biome[x][y] == 0)
-                    {
-                        tempTexture = dirt;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 1)
-                    {
-                        tempTexture = sand;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 2)
-                    {
-                        tempTexture = livelyGrass;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 3)
-                    {
-                        tempTexture = stone;
-                    }
-                    if (chunks[i].m_biome[x][y] == 4)
-                    {
-                        tempTexture = grass;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 5)
-                    {
-                        tempTexture = dirt;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 6)
-                    {
-                        tempTexture = redSand;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 7)
-                    {
-                        tempTexture = snow;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 8)
-                    {
-                        tempTexture = ice;
-                    }
-                    else if (chunks[i].m_biome[x][y] == 9)
-                    {
-                        tempTexture = darkGrass;
-                    }
+                    getTile(chunks[i].m_tiles[x][y]);
 
                     if (chunks[i].m_tilegrid[x][y] != 0)
                     {
@@ -244,14 +270,43 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
                     }
-                    if (chunks[i].m_overlay[x][y]) {
-                        temp.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
-                        temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
-                        clip.x = 0;
-                        clip.y = 48;
-                        clip.w = 8;
-                        clip.h = 8;
-                        SDL_RenderTexture(rend, tempTexture, &clip, &temp);
+
+                    if (chunks[i].m_overlay[x][y] >= 8) {
+                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
+                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
+                        clipOverlay.x = 0;
+                        clipOverlay.y = 48;
+                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
+                    }
+
+                    getTile(chunks[i].m_tiles[x + 1][y]);
+
+                    if ((chunks[i].m_overlay[x][y] % 8) >= 4) {
+                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 16;
+                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
+                        clipOverlay.x = 8;
+                        clipOverlay.y = 48;
+                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
+                    }
+
+                    getTile(chunks[i].m_tiles[x][y + 1]);
+
+                    if ((chunks[i].m_overlay[x][y] % 4) >= 2) {
+                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
+                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 16;
+                        clipOverlay.x = 0;
+                        clipOverlay.y = 56;
+                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
+                    }
+
+                    getTile(chunks[i].m_tiles[x + 1][y + 1]);
+
+                    if (chunks[i].m_overlay[x][y] % 2) {
+                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 16;
+                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 16;
+                        clipOverlay.x = 8;
+                        clipOverlay.y = 56;
+                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
                 }
             }
