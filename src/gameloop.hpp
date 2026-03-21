@@ -266,22 +266,10 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         temp.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE;
                         clip.x = tilegridpos[chunks[i].m_tilegrid[x][y]].x;
                         clip.y = tilegridpos[chunks[i].m_tilegrid[x][y]].y;
-                        clip.w = 16;
-                        clip.h = 16;
                         SDL_RenderTexture(rend, tempTexture, &clip, &temp);
                     }
 
-                    if (chunks[i].m_overlay[x][y] >= 8) {
-                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
-                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
-                        clipOverlay.x = 0;
-                        clipOverlay.y = 48;
-                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
-                    }
-
-                    getTile(chunks[i].m_tiles[x + 1][y]);
-
-                    if ((chunks[i].m_overlay[x][y] % 8) >= 4) {
+                    if ((chunks[i].m_overlay[x][y] & 4) == 4) {
                         tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 16;
                         tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
                         clipOverlay.x = 8;
@@ -289,9 +277,7 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
 
-                    getTile(chunks[i].m_tiles[x][y + 1]);
-
-                    if ((chunks[i].m_overlay[x][y] % 4) >= 2) {
+                    if ((chunks[i].m_overlay[x][y] & 2) == 2) {
                         tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
                         tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 16;
                         clipOverlay.x = 0;
@@ -299,9 +285,17 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
 
-                    getTile(chunks[i].m_tiles[x + 1][y + 1]);
+                    getTile(chunks[i].m_tiles[x + 1][y]);
 
-                    if (chunks[i].m_overlay[x][y] % 2) {
+                    if ((chunks[i].m_overlay[x][y] & 8) == 8) {
+                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 32;
+                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 32;
+                        clipOverlay.x = 0;
+                        clipOverlay.y = 48;
+                        SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
+                    }
+
+                    if ((chunks[i].m_overlay[x][y] & 1) == 1) {
                         tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE + 16;
                         tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE + 16;
                         clipOverlay.x = 8;
