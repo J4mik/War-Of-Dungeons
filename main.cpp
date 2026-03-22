@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     TTF_Init();
     MIX_Init();
 
-    SDL_Window* win = SDL_CreateWindow("FlashSong", screen.w, screen.h, SDL_WINDOW_RESIZABLE);
+    SDL_Window* win = SDL_CreateWindow("War of Dots", screen.w, screen.h, SDL_WINDOW_RESIZABLE);
     SDL_SetWindowPosition(win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_Renderer* rend = SDL_CreateRenderer(win, NULL);
     SDL_SetRenderDrawColor(rend, 2, 15, 35, 255);
