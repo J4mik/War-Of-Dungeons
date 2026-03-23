@@ -8,11 +8,13 @@
 
 #include "chunkgen.hpp"
 
+std::basic_string<char> levelPath;
 
 #define TILESIZE 32
 #define CHUNKSIZE 16
 #define CHUNKSIZEPX (TILESIZE * CHUNKSIZE)
-#define HALFTILESIZE (TILESIZE >> 1)
+#define HALFTILESIZE (TILESIZE * 0.5)
+
 
 class position
 {
@@ -39,10 +41,12 @@ class chunk
 public:
     int16_t x; // multiplied by 8 to save unecessary bytes that would be wasted by storing as a multiple of 8
     int16_t y;
-    uint16_t m_tiles[CHUNKSIZE + 1][CHUNKSIZE] = {}; // array of tiles
+    uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
     char m_overlay[CHUNKSIZE][CHUNKSIZE] = {};
+    // std::vector<tile> m_underlay = {};
+    // std::vector<position> m_mask = {};
     void generateChunk()
     {
         int32_t startX = CHUNKSIZE * x;
@@ -52,10 +56,10 @@ public:
         {
             for (std::int32_t tileY = 0; tileY < CHUNKSIZE + 1; ++tileY)
             {
-                tilesTemp[tileX][tileY] = calculateTile(startX + tileX, startY + tileY);
-                m_biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY);
+                m_biome[tileX][tileY] = generateBiome(startX + tileX, startY + tileY, &tilesTemp[tileX][tileY]);
             }
         }
+
 
         for (std::int32_t tileX = 0; tileX < CHUNKSIZE + 1; ++tileX)
         {
@@ -73,28 +77,61 @@ public:
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 | tilesTemp[tileX + 1][tileY] * 4 |
                     tilesTemp[tileX][tileY + 1] * 2 | tilesTemp[tileX + 1][tileY + 1];
 
-                    
-                    m_overlay[tileX][tileY] = 
-                        (char((m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) && (m_biome[tileX][tileY + 1] != m_biome[tileX + 1][tileY + 1]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 3) |
-                        (char((m_biome[tileX + 1][tileY + 1] == m_biome[tileX][tileY]) && (m_biome[tileX][tileY] != m_biome[tileX][tileY + 1]) && tilesTemp[tileX][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 2) |
-                        (char((m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]) && (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 1) |
-                        (char(m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) && (m_biome[tileX][tileY + 1] != m_biome[tileX][tileY]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX][tileY]);
 
+                m_overlay[tileX][tileY] =
+                    (char((m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) &&
+                          (m_biome[tileX][tileY + 1] != m_biome[tileX + 1][tileY + 1]) && tilesTemp[tileX + 1][tileY] &&
+                          tilesTemp[tileX][tileY + 1] && tilesTemp[tileX + 1][tileY + 1])
+                     << 3) |
+                    (char((m_biome[tileX + 1][tileY + 1] == m_biome[tileX][tileY]) &&
+                          (m_biome[tileX][tileY] != m_biome[tileX][tileY + 1]) && tilesTemp[tileX][tileY] &&
+                          tilesTemp[tileX][tileY + 1] && tilesTemp[tileX + 1][tileY + 1])
+                     << 2) |
+                    (char((m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]) &&
+                          (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY]) && tilesTemp[tileX + 1][tileY] &&
+                          tilesTemp[tileX][tileY] && tilesTemp[tileX + 1][tileY + 1])
+                     << 1) |
+                    (char(m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) &&
+                     (m_biome[tileX][tileY + 1] != m_biome[tileX][tileY]) && tilesTemp[tileX + 1][tileY] &&
+                     tilesTemp[tileX][tileY + 1] && tilesTemp[tileX][tileY]);
             }
         }
         m_stored = false;
     }
-    void storeChunk()
-    {
-        if (!m_stored)
-        {
-            m_stored = true;
-        }
-    }
+    // void storeChunk()
+    // {
+    //     if (!m_stored)
+    //     {
+    //         std::ifstream FileStream;
+    //         FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    //         try
+    //         {
+    //             FileStream.open(levelPath, std::ios::in | std::ios::binary);
+    //             for (int i = 0; i < 1024; ++i)
+    //             {
+    //                 FileStream.read((char*)&pow255[i], 8);
+    //             }
+    //             FileStream.close();
+    //         }
+    //         catch (std::ifstream::failure& error)
+    //         {
+    //             if (!pow255[0] == 1)
+    //             {
+    //                 std::ofstream FileStream;
+    //                 FileStream.open(levelPath, std::ios::out | std::ios::binary);
+    //                 pow255[0] = 1;
+    //                 FileStream.write((char*)&pow255[0], 8);
+    //                 for (int i = 1; i < 1024; ++i)
+    //                 {
+    //                     pow255[i] = pow255[i - 1] * 0.985;
+    //                     FileStream.write((char*)&pow255[i], 8);
+    //                 }
+    //                 FileStream.close();
+    //             }
+    //         }
+    //         m_stored = true;
+    //     }
+    // }
     void loadChunk(int16_t posX, int16_t posY)
     {
         m_stored = true;

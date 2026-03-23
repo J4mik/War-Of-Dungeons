@@ -5,9 +5,10 @@
 #include "../include/JSON/json.hpp"
 #include "audio.hpp"
 #include "engine.hpp"
+#include "loadTiles.hpp"
 
 
-#define GENERATECHUNKOFSCREENOFSET 200
+#define GENERATECHUNKOFSCREENOFSET 100
 
 #define PLAYERSPEED 0.34
 
@@ -26,30 +27,6 @@ int spawnX = 0;
 int spawnY = 0;
 
 bool tempFlag = 1;
-
-SDL_Texture* tempTexture;
-
-SDL_Texture* grass;
-
-    SDL_Texture* livelyGrass;
-
-    SDL_Texture* darkGrass;
-
-    SDL_Texture* driedGrass;
-
-    SDL_Texture* ice;
-
-    SDL_Texture* dirt;
-
-    SDL_Texture* snow;
-
-    SDL_Texture* sand;
-
-    SDL_Texture* redSand;
-
-    SDL_Texture* stone;
-
-    SDL_Texture* playerTexture;
 
 void loadChunks()
 {
@@ -92,61 +69,19 @@ void loadChunks()
                 {
                     chunks.emplace_back(chunk{});
                     chunks[chunks.size() - 1].loadChunk(x, y);
-                    // if (!running) {
                     break;
-                    // }
                 }
-                tempFlag = 1;
+                else
+                {
+                    tempFlag = 1;
+                }
             }
         }
         // SDL_Delay(1);
     }
 }
 
-void playerMovement() {}
-
-void getTile(uint8_t tile) {
-    switch (tile)
-    {
-    case 0:
-        tempTexture = driedGrass;
-        break;
-    case 1:
-        tempTexture = sand;
-        break;
-    case 2:
-        tempTexture = livelyGrass;
-        break;
-    case 3:
-        tempTexture = stone;
-        break;
-    case 4:
-        tempTexture = grass;
-        break;
-    case 5:
-        tempTexture = dirt;
-        break;
-    case 6:
-        tempTexture = redSand;
-        break;
-    case 7:
-        tempTexture = snow;
-        break;
-    case 8:
-        tempTexture = ice;
-        break;
-    case 9:
-        tempTexture = darkGrass;
-        break;
-    
-    default:
-        // tempTexture = dirt;
-        break;
-    }
-    
-}
-
-bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
+bool game(SDL_Window* win, SDL_Renderer* rend)
 {
     if (!running)
     {
@@ -163,43 +98,12 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
     SDL_FRect tempOverlay{0, 0, 16, 16};
     SDL_FRect clipOverlay{0, 0, 8, 8};
 
-    grass = IMG_LoadTexture(rend, "data/images/GrassTiles.png");
-    SDL_SetTextureScaleMode(grass, SDL_SCALEMODE_NEAREST);
-
-    livelyGrass = IMG_LoadTexture(rend, "data/images/LivelyGrassTiles.png");
-    SDL_SetTextureScaleMode(livelyGrass, SDL_SCALEMODE_NEAREST);
-
-    darkGrass = IMG_LoadTexture(rend, "data/images/DarkGrassTiles.png");
-    SDL_SetTextureScaleMode(darkGrass, SDL_SCALEMODE_NEAREST);
-
-    driedGrass = IMG_LoadTexture(rend, "data/images/DriedGrassTiles.png");
-    SDL_SetTextureScaleMode(driedGrass, SDL_SCALEMODE_NEAREST);
-
-    ice = IMG_LoadTexture(rend, "data/images/IceTiles.png");
-    SDL_SetTextureScaleMode(ice, SDL_SCALEMODE_NEAREST);
-
-    dirt = IMG_LoadTexture(rend, "data/images/DirtTiles.png");
-    SDL_SetTextureScaleMode(dirt, SDL_SCALEMODE_NEAREST);
-
-    snow = IMG_LoadTexture(rend, "data/images/SnowTiles.png");
-    SDL_SetTextureScaleMode(snow, SDL_SCALEMODE_NEAREST);
-
-    sand = IMG_LoadTexture(rend, "data/images/SandTiles.png");
-    SDL_SetTextureScaleMode(sand, SDL_SCALEMODE_NEAREST);
-
-    redSand = IMG_LoadTexture(rend, "data/images/RedSandTiles.png");
-    SDL_SetTextureScaleMode(redSand, SDL_SCALEMODE_NEAREST);
-
-    stone = IMG_LoadTexture(rend, "data/images/StoneTiles.png");
-    SDL_SetTextureScaleMode(stone, SDL_SCALEMODE_NEAREST);
-
-    SDL_Texture* playerTexture = IMG_LoadTexture(rend, "data/images/player.png");
-    SDL_SetTextureScaleMode(playerTexture, SDL_SCALEMODE_NEAREST);
+    loadTiles(rend);
 
     srand(SEED);
 
     // calculates player spawn so I'ts always on land
-    while (!calculateTile(spawnX, spawnY))
+    while (calculateHeight(spawnX, spawnY) > 0)
     {
         spawnX += rand() % 64 - 32;
         spawnY += rand() % 64 - 32;
@@ -267,35 +171,47 @@ bool game(int lvl, SDL_Window* win, SDL_Renderer* rend)
                 {
                     getTile(chunks[i].m_tiles[x][y]);
 
-                    if ((chunks[i].m_overlay[x][y] & 4) == 4) {
-                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;
-                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 3;
+                    if ((chunks[i].m_overlay[x][y] & 4) == 4)
+                    {
+                        tempOverlay.x =
+                            (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;
+                        tempOverlay.y =
+                            (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 3;
                         clipOverlay.x = 8;
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
 
-                    if ((chunks[i].m_overlay[x][y] & 2) == 2) {
-                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
-                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 2;
+                    if ((chunks[i].m_overlay[x][y] & 2) == 2)
+                    {
+                        tempOverlay.x =
+                            (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
+                        tempOverlay.y =
+                            (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 2;
                         clipOverlay.x = 0;
                         clipOverlay.y = 56;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
 
-                    getTile(chunks[i].m_tiles[x + 1][y]);  
+                    getTile(chunks[i].m_tiles[x + 1][y]);
 
-                    if ((chunks[i].m_overlay[x][y] & 8) == 8) {
-                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
-                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 3;
+                    if ((chunks[i].m_overlay[x][y] & 8) == 8)
+                    {
+                        tempOverlay.x =
+                            (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
+                        tempOverlay.y =
+                            (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 3;
                         clipOverlay.x = 0;
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
 
-                    if (chunks[i].m_overlay[x][y] & 1) {
-                        tempOverlay.x = (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;
-                        tempOverlay.y = (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 2;
+                    if (chunks[i].m_overlay[x][y] & 1)
+                    {
+                        tempOverlay.x =
+                            (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;
+                        tempOverlay.y =
+                            (y * TILESIZE + chunks[i].y * CHUNKSIZEPX) + screen.tempOfsetY + HALFTILESIZE * 2;
                         clipOverlay.x = 8;
                         clipOverlay.y = 56;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
