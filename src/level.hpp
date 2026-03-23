@@ -73,17 +73,23 @@ public:
                 m_tilegrid[tileX][tileY] = tilesTemp[tileX][tileY] * 8 | tilesTemp[tileX + 1][tileY] * 4 |
                     tilesTemp[tileX][tileY + 1] * 2 | tilesTemp[tileX + 1][tileY + 1];
 
-                    
-                    m_overlay[tileX][tileY] = 
-                        (char((m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) && (m_biome[tileX][tileY + 1] != m_biome[tileX + 1][tileY + 1]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 3) |
-                        (char((m_biome[tileX + 1][tileY + 1] == m_biome[tileX][tileY]) && (m_biome[tileX][tileY] != m_biome[tileX][tileY + 1]) && tilesTemp[tileX][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 2) |
-                        (char((m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]) && (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY] &&
-                    tilesTemp[tileX + 1][tileY + 1]) << 1) |
-                        (char(m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) && (m_biome[tileX][tileY + 1] != m_biome[tileX][tileY]) && tilesTemp[tileX + 1][tileY] && tilesTemp[tileX][tileY + 1] &&
-                    tilesTemp[tileX][tileY]);
 
+                m_overlay[tileX][tileY] =
+                    (char((m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) &&
+                          (m_biome[tileX][tileY + 1] != m_biome[tileX + 1][tileY + 1]) && tilesTemp[tileX + 1][tileY] &&
+                          tilesTemp[tileX][tileY + 1] && tilesTemp[tileX + 1][tileY + 1])
+                     << 3) |
+                    (char((m_biome[tileX + 1][tileY + 1] == m_biome[tileX][tileY]) &&
+                          (m_biome[tileX][tileY] != m_biome[tileX][tileY + 1]) && tilesTemp[tileX][tileY] &&
+                          tilesTemp[tileX][tileY + 1] && tilesTemp[tileX + 1][tileY + 1])
+                     << 2) |
+                    (char((m_biome[tileX][tileY] == m_biome[tileX + 1][tileY + 1]) &&
+                          (m_biome[tileX][tileY] != m_biome[tileX + 1][tileY]) && tilesTemp[tileX + 1][tileY] &&
+                          tilesTemp[tileX][tileY] && tilesTemp[tileX + 1][tileY + 1])
+                     << 1) |
+                    (char(m_biome[tileX][tileY + 1] == m_biome[tileX + 1][tileY]) &&
+                     (m_biome[tileX][tileY + 1] != m_biome[tileX][tileY]) && tilesTemp[tileX + 1][tileY] &&
+                     tilesTemp[tileX][tileY + 1] && tilesTemp[tileX][tileY]);
             }
         }
         m_stored = false;
