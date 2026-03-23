@@ -1,7 +1,5 @@
 #include "src\gameloop.hpp"
 
-int level = 1;
-
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_VIDEO || SDL_INIT_AUDIO);
@@ -35,10 +33,7 @@ int main(int argc, char* argv[])
 
     playButtonPos = {0, 0, 0, 0};
 
-    while (game(level, win, rend))
-    {
-        ++level;
-    }
+    game(win, rend);
 
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);

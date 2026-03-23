@@ -37,18 +37,52 @@ double calculateSwissCheeseCave(std::int32_t x, std::int32_t y)
         perlin.octave2D_01((x * FREQUENCY3 + 59475), (y * FREQUENCY3), OCTAVES) * MULTIPLIER3;
 }
 
-int generateBiome(std::int32_t x, std::int32_t y)
+// generates multipliers for the cave types
+double calculateHeight(std::int32_t x, std::int32_t y)
+{
+    const siv::PerlinNoise perlin{SEED + 2};
+
+    double multiplier =
+        perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.15;
+
+    double value = multiplier * calculateSpaghettiCave(x, y) + (1 - multiplier) * calculateSwissCheeseCave(x, y);
+
+    double threshold = (1 - multiplier) * SWISSCHEESETHRESHOLD + multiplier * SPAGHETTITHRESHOLD;
+
+    return (value - threshold);
+}
+
+int generateBiome(std::int32_t x, std::int32_t y, bool* tile)
 {
     const siv::PerlinNoise perlin{SEED + 3};
 
+    double height = calculateHeight(x, y);
+
     double humidity;
-    double temperature = 0.7;
+    double temperature;
     double weirdness;
     double liveliness;
 
     humidity = perlin.octave2D_01(x * 0.0017, y * 0.0017, 6);
     temperature = perlin.octave2D_01(x * 0.0007 + 6769, y * 0.0007 + 42069, 6);
     weirdness = perlin.octave2D_01(x * 0.002 + 69420, y * 0.002 + 61678, 6);
+
+
+    if (height < 0)
+    {
+        tile = (bool*)0;
+    }
+    else
+    {
+        tile = (bool*)1;
+    }
+
+    if (height < 0.018)
+    {
+        return 1;
+        // desert
+    }
+
 
     if (temperature > 0.6)
     {
@@ -110,19 +144,4 @@ int generateBiome(std::int32_t x, std::int32_t y)
         // thundra
     }
     return 0;
-}
-
-// generates multipliers for the cave types
-bool calculateTile(std::int32_t x, std::int32_t y)
-{
-    const siv::PerlinNoise perlin{SEED + 2};
-
-    double multiplier =
-        perlin.octave2D_01((x * CAVETRANSITIONFREQUENCY), (y * CAVETRANSITIONFREQUENCY), OCTAVES) - 0.15;
-
-    double value = multiplier * calculateSpaghettiCave(x, y) + (1 - multiplier) * calculateSwissCheeseCave(x, y);
-
-    double threshold = (1 - multiplier) * SWISSCHEESETHRESHOLD + multiplier * SPAGHETTITHRESHOLD;
-
-    return value > threshold;
 }
