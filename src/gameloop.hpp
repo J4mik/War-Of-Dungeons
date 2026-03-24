@@ -103,7 +103,7 @@ bool game(SDL_Window* win, SDL_Renderer* rend)
     srand(SEED);
 
     // calculates player spawn so I'ts always on land
-    while (calculateHeight(spawnX, spawnY) > 0)
+    while (calculateHeight(spawnX, spawnY) < 0)
     {
         spawnX += rand() % 64 - 32;
         spawnY += rand() % 64 - 32;
@@ -181,8 +181,7 @@ bool game(SDL_Window* win, SDL_Renderer* rend)
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-
-                    if ((chunks[i].m_overlay[x][y] & 2) == 2)
+                    else if ((chunks[i].m_overlay[x][y] & 2) == 2)
                     {
                         tempOverlay.x =
                             (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
@@ -192,8 +191,10 @@ bool game(SDL_Window* win, SDL_Renderer* rend)
                         clipOverlay.y = 56;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-
+                    else
+                    {
                     getTile(chunks[i].m_tiles[x + 1][y]);
+                    }
 
                     if ((chunks[i].m_overlay[x][y] & 8) == 8)
                     {
@@ -205,8 +206,7 @@ bool game(SDL_Window* win, SDL_Renderer* rend)
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-
-                    if (chunks[i].m_overlay[x][y] & 1)
+                    else if (chunks[i].m_overlay[x][y] & 1)
                     {
                         tempOverlay.x =
                             (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;

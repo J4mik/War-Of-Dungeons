@@ -18,4 +18,4 @@ bool colidetect(SDL_FRect a, SDL_FRect b)
         }
     }
     return 0;
-}
+} 
