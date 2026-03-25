@@ -5,7 +5,7 @@
 #include "src/audio.hpp"
 #include "src/render.hpp"
 
-#define PLAYERSPEED 0.34
+#define PLAYERSPEED 0.36
 
 int spawnX = 0;
 int spawnY = 0;
@@ -73,13 +73,16 @@ int main(int argc, char* argv[])
     {
         inputs();
 
+        screen.posX -= (screen.posX - player.x) * deltaTime * (1 - decay.pow255[deltaTime]);
+        screen.posY -= (screen.posY - player.y) * deltaTime * (1 - decay.pow255[deltaTime]);
+
         player.VectX *= decay.pow255[deltaTime];
         player.VectY *= decay.pow255[deltaTime];
 
         // player rendering
-        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime *
+        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) *
             (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
-        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime *
+        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) *
             (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
 
 
@@ -88,18 +91,14 @@ int main(int argc, char* argv[])
                 abs((key.s || key.downArrow) - (key.w || key.upArrow)) >
             1)
         {
-            player.x += player.VectX * 0.72;
-            player.y += player.VectY * 0.72;
+            player.x += player.VectX * 0.72 * deltaTime;
+            player.y += player.VectY * 0.72 * deltaTime;
         }
         else
         {
-            player.x += player.VectX;
-            player.y += player.VectY;
+            player.x += player.VectX * deltaTime;
+            player.y += player.VectY * deltaTime;
         }
-
-        playerPos.x = player.x + screen.ofsetX - screen.posX;
-        playerPos.y = player.y + screen.ofsetY - screen.posY;
-
 
         SDL_Delay(1);
     }

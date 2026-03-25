@@ -17,12 +17,12 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
     // tile rendering
     while (running)
     {  
-        screen.posX -= (screen.posX - player.x) * 0.15 * deltaTime * (1 - decay.pow255[deltaTime]);
-        screen.posY -= (screen.posY - player.y) * 0.15 * deltaTime * (1 - decay.pow255[deltaTime]);
         screen.ofsetX = screen.w * 0.5;
         screen.ofsetY = screen.h * 0.5;
         screen.tempOfsetX = std::floor(screen.ofsetX - screen.posX);
         screen.tempOfsetY = std::floor(screen.ofsetY - screen.posY);
+        playerPos.x = player.x + screen.ofsetX - screen.posX;
+        playerPos.y = player.y + screen.ofsetY - screen.posY;
 
         
         SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
