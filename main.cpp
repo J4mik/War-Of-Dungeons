@@ -1,4 +1,14 @@
-#include "src\gameloop.hpp"
+#pragma once
+
+#include <thread>
+#include <vector>
+#include "src/audio.hpp"
+#include "src/render.hpp"
+
+#define PLAYERSPEED 0.34
+
+int spawnX = 0;
+int spawnY = 0;
 
 int main(int argc, char* argv[])
 {
@@ -31,9 +41,72 @@ int main(int argc, char* argv[])
     // SDL_Delay(10);
     // }
 
-    playButtonPos = {0, 0, 0, 0};
+    // SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
+    // SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
-    game(win, rend);
+    decay.init("./data/num.bin");
+
+    srand(SEED);
+
+    // calculates player spawn so I'ts always on land
+    while (calculateHeight(spawnX, spawnY) < 0)
+    {
+        spawnX += rand() % 64 - 32;
+        spawnY += rand() % 64 - 32;
+        std::cout << spawnX << ", " << spawnY << "\n";
+    }
+
+    player.x = spawnX * TILESIZE;
+    player.y = spawnY * TILESIZE;
+
+    screen.posX = player.x;
+    screen.posY = player.y;
+
+    std::thread t1(loadChunks);
+
+    inputs();
+
+    std::thread t2(renderingLoop, win, rend);
+
+
+    while (running)
+    {
+        inputs();
+
+        player.VectX *= decay.pow255[deltaTime];
+        player.VectY *= decay.pow255[deltaTime];
+
+        // player rendering
+        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) * deltaTime *
+            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
+        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) * deltaTime *
+            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
+
+
+        // clamps the player speed
+        if (abs((key.d || key.rightArrow) - (key.a || key.leftArrow)) +
+                abs((key.s || key.downArrow) - (key.w || key.upArrow)) >
+            1)
+        {
+            player.x += player.VectX * 0.72;
+            player.y += player.VectY * 0.72;
+        }
+        else
+        {
+            player.x += player.VectX;
+            player.y += player.VectY;
+        }
+
+        playerPos.x = player.x + screen.ofsetX - screen.posX;
+        playerPos.y = player.y + screen.ofsetY - screen.posY;
+
+
+        SDL_Delay(1);
+    }
+    musicRunning = 0;
+    running = 0;
+    t1.join();
+    t2.join();
 
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);

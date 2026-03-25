@@ -2,8 +2,6 @@
 
 #include "collisions.hpp"
 #include "fonts.hpp"
-#include "level.hpp"
-
 
 uint64_t lastTick;
 uint16_t deltaTime;
@@ -30,6 +28,8 @@ public:
     float VectX;
     float VectY;
 };
+
+sprite player;
 
 struct
 {
