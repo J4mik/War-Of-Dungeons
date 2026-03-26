@@ -52,7 +52,7 @@ bool running = 1;
 class expDecay
 {
 public:
-    double pow255[1024] = {};
+    double pow255[5000] = {};
 
     void init(std::basic_string<char> path)
     {
@@ -62,7 +62,7 @@ public:
         try
         {
             FileStream.open(path, std::ios::in | std::ios::binary);
-            for (int i = 0; i < 1024; ++i)
+            for (int i = 0; i < 5000; ++i)
             {
                 FileStream.read((char*)&pow255[i], 8);
             }
@@ -78,9 +78,9 @@ public:
                 FileStream.open(path, std::ios::out | std::ios::binary);
                 pow255[0] = 1;
                 FileStream.write((char*)&pow255[0], 8);
-                for (int i = 1; i < 1024; ++i)
+                for (int i = 1; i < 5000; ++i)
                 {
-                    pow255[i] = pow255[i - 1] * 0.985;
+                    pow255[i] = pow255[i - 1] * 0.995;
                     FileStream.write((char*)&pow255[i], 8);
                 }
                 FileStream.close();
