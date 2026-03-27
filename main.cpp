@@ -1,5 +1,3 @@
-#pragma once
-
 #include <thread>
 #include <vector>
 #include "src/audio.hpp"
@@ -29,8 +27,6 @@ int main(int argc, char* argv[])
     SDL_FRect playButtonPos;
     Text ByteBounce("data/fonts/ByteBounce.ttf", 80);
 
-    // while (!(mouseX > ((screen.w - 96) / 2) && mouseX < ((screen.w + 96) / 2) && mouseY > (screen.h / 2) && mouseY <
-    // (screen.h / 2 + 36)) && running) {
     inputs();
     SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
     SDL_RenderClear(rend);
@@ -38,11 +34,6 @@ int main(int argc, char* argv[])
     SDL_RenderTexture(rend, playButton, NULL, &playButtonPos);
 
     SDL_RenderPresent(rend);
-    // SDL_Delay(10);
-    // }
-
-    // SDL_Texture* texture = IMG_LoadTexture(rend, "data/images/blocks.png");
-    // SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
     decay.init("./data/num.bin");
 
@@ -62,9 +53,9 @@ int main(int argc, char* argv[])
     screen.posX = player.x;
     screen.posY = player.y;
 
-    std::thread t1(loadChunks);
-
     inputs();
+
+    std::thread t1(loadChunks);
 
     std::thread t2(renderingLoop, win, rend);
 
@@ -76,14 +67,14 @@ int main(int argc, char* argv[])
         screen.posX -= (screen.posX - player.x) * deltaTime * (1 - decay.pow255[deltaTime]);
         screen.posY -= (screen.posY - player.y) * deltaTime * (1 - decay.pow255[deltaTime]);
 
-        player.VectX *= decay.pow255[deltaTime];
-        player.VectY *= decay.pow255[deltaTime];
+        player.VectX *= decay.pow255[deltaTime * 3];
+        player.VectY *= decay.pow255[deltaTime * 3];
 
         // player rendering
         player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) *
-            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
+            (1 - decay.pow255[deltaTime * 3]) * PLAYERSPEED;
         player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) *
-            (1 - decay.pow255[deltaTime]) * PLAYERSPEED;
+            (1 - decay.pow255[deltaTime * 3]) * PLAYERSPEED;
 
 
         // clamps the player speed

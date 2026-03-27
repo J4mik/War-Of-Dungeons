@@ -68,7 +68,7 @@ int generateBiome(std::int32_t x, std::int32_t y, bool* tile)
     weirdness = perlin.octave2D_01(x * 0.002 + 69420, y * 0.002 + 61678, 6);
     liveliness = perlin.octave2D_01(x * 0.002 + 34520, y * 0.002 + 618, 3);
 
-    double beachyness = (perlin.octave2D_01(x * 0.006 + 340, y * 0.006 + 6148, 2) - (temperature * 0.125) - (liveliness * 0.125) - (humidity * 0.25) - 0.28);
+    double beachyness = (perlin.octave2D_01(x * 0.003 + 340, y * 0.003 + 6148, 3) - (temperature * 0.125) - (liveliness * 0.125) - (humidity * 0.25) - 0.25);
 
     if (height < 0)
     {

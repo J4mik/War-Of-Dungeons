@@ -60,6 +60,7 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
                 {
                     getTile(chunks[i].m_tiles[x][y]);
 
+
                     if ((chunks[i].m_overlay[x][y] & 4) == 4)
                     {
                         tempOverlay.x =
@@ -70,7 +71,7 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-                    else if ((chunks[i].m_overlay[x][y] & 2) == 2)
+                    if ((chunks[i].m_overlay[x][y] & 2) == 2)
                     {
                         tempOverlay.x =
                             (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 3;
@@ -80,10 +81,12 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
                         clipOverlay.y = 56;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-                    else
+
+                    if ((chunks[i].m_overlay[x][y] & 8) < 2)
                     {
-                    getTile(chunks[i].m_tiles[x + 1][y]);
+                        getTile(chunks[i].m_tiles[x + 1][y]);
                     }
+
 
                     if ((chunks[i].m_overlay[x][y] & 8) == 8)
                     {
@@ -95,7 +98,7 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
                         clipOverlay.y = 48;
                         SDL_RenderTexture(rend, tempTexture, &clipOverlay, &tempOverlay);
                     }
-                    else if (chunks[i].m_overlay[x][y] & 1)
+                    if (chunks[i].m_overlay[x][y] & 1)
                     {
                         tempOverlay.x =
                             (x * TILESIZE + chunks[i].x * CHUNKSIZEPX) + screen.tempOfsetX + HALFTILESIZE * 2;
@@ -110,6 +113,5 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
         }
         SDL_RenderTexture(rend, playerTexture, NULL, &playerPos);
         SDL_RenderPresent(rend);
-
     }
 }

@@ -41,7 +41,7 @@ class chunk
 public:
     int16_t x; // multiplied by 8 to save unecessary bytes that would be wasted by storing as a multiple of 8
     int16_t y;
-    uint16_t m_tiles[CHUNKSIZE][CHUNKSIZE] = {}; // array of tiles
+    uint16_t m_tiles[CHUNKSIZE + 1][CHUNKSIZE] = {}; // array of tiles
     char m_tilegrid[CHUNKSIZE][CHUNKSIZE] = {};
     uint16_t m_biome[CHUNKSIZE + 1][CHUNKSIZE + 1] = {};
     char m_overlay[CHUNKSIZE][CHUNKSIZE] = {};
