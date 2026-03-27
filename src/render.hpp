@@ -6,6 +6,21 @@ expDecay decay;
 
 SDL_FRect playerPos{0, 0, 32, 42};
 
+// the vertex input layout
+struct Vertex
+{
+    float x, y, z;      //vec3 position
+    float r, g, b, a;   //vec4 color
+};
+
+// a list of vertices
+static Vertex vertices[]
+{
+    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},     // top vertex
+    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
+    {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
+};
+
 void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
     SDL_FRect tempOverlay{0, 0, 16, 16};
     SDL_FRect clipOverlay{0, 0, 8, 8};
@@ -13,6 +28,10 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
     SDL_FRect clip{0, 0, 16, 16};
     SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
     loadTiles(rend);
+
+    SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV || SDL_GPU_SHADERFORMAT_MSL || SDL_GPU_SHADERFORMAT_DXIL, false, nullptr);
+
+    SDL_ClaimWindowForGPUDevice(device, win);
 
     // tile rendering
     while (running)
@@ -112,6 +131,33 @@ void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
             }
         }
         SDL_RenderTexture(rend, playerTexture, NULL, &playerPos);
+
+
+        SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(device);
+
+        // get the swapchain texture
+        SDL_GPUTexture* swapchainTexture;
+        Uint32 width, height;
+        SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, win, &swapchainTexture, &width, &height);
+
+        SDL_GPUColorTargetInfo colorTargetInfo{};
+        colorTargetInfo.clear_color = {240/255.0f, 240/255.0f, 240/255.0f, 255/255.0f};
+        colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+        colorTargetInfo.texture = swapchainTexture;
+
+        // begin a render pass
+        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
+
+        // draw something
+
+        // end the render pass
+        SDL_EndGPURenderPass(renderPass);
+
+        // submit the command buffer
+        SDL_SubmitGPUCommandBuffer(commandBuffer);
+
+
         SDL_RenderPresent(rend);
     }
 }

@@ -20,18 +20,11 @@ int main(int argc, char* argv[])
     SDL_SetRenderDrawColor(rend, 2, 15, 35, 255);
     SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
 
-
-    SDL_Texture* playButton = IMG_LoadTexture(rend, "data/images/play.png");
-    SDL_SetTextureScaleMode(playButton, SDL_SCALEMODE_NEAREST);
-
-    SDL_FRect playButtonPos;
-    Text ByteBounce("data/fonts/ByteBounce.ttf", 80);
+    // Text ByteBounce("data/fonts/ByteBounce.ttf", 80);/
 
     inputs();
     SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
     SDL_RenderClear(rend);
-
-    SDL_RenderTexture(rend, playButton, NULL, &playButtonPos);
 
     SDL_RenderPresent(rend);
 
