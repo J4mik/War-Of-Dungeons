@@ -21,12 +21,17 @@ static Vertex vertices[]
     {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
 };
 
-void renderingLoop(SDL_Window* win, SDL_Renderer* rend) {
+void renderingLoop(SDL_Window* win) {
     SDL_FRect tempOverlay{0, 0, 16, 16};
     SDL_FRect clipOverlay{0, 0, 8, 8};
 
     SDL_FRect clip{0, 0, 16, 16};
     SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
+
+    SDL_Renderer* rend = SDL_CreateRenderer(win, NULL);
+    SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+
+
     loadTiles(rend);
 
     SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV || SDL_GPU_SHADERFORMAT_MSL || SDL_GPU_SHADERFORMAT_DXIL, false, nullptr);

@@ -16,17 +16,11 @@ int main(int argc, char* argv[])
 
     SDL_Window* win = SDL_CreateWindow("War of Dungeons", screen.w, screen.h, SDL_WINDOW_RESIZABLE);
     SDL_SetWindowPosition(win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    SDL_Renderer* rend = SDL_CreateRenderer(win, NULL);
-    SDL_SetRenderDrawColor(rend, 2, 15, 35, 255);
-    SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
 
     // Text ByteBounce("data/fonts/ByteBounce.ttf", 80);/
 
     inputs();
     SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
-    SDL_RenderClear(rend);
-
-    SDL_RenderPresent(rend);
 
     decay.init("./data/num.bin");
 
@@ -50,7 +44,7 @@ int main(int argc, char* argv[])
 
     std::thread t1(loadChunks);
 
-    std::thread t2(renderingLoop, win, rend);
+    std::thread t2(renderingLoop, win);
 
 
     while (running)
@@ -91,7 +85,6 @@ int main(int argc, char* argv[])
     t1.join();
     t2.join();
 
-    SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();
     TTF_Quit();

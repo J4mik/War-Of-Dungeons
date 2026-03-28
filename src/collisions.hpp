@@ -4,6 +4,8 @@
 #include <SDL3/SDL_image.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_shadercross.h>
+
 #include <iostream>
 #include <stdio.h>
 
