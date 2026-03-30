@@ -13,9 +13,9 @@ struct Vertex
 // a list of vertices
 static Vertex vertices[]
 {
-    {-1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},     // top vertex
-    {-1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
-    {1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
+    {-1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},     // top vertex
+    {-1.0f, -1.0f, 0.0f, 1.0f, 0.7f, 0.0f, 1.0f},   // bottom left vertex
+    {1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}     // bottom right vertex
 };
 
 struct UniformBuffer

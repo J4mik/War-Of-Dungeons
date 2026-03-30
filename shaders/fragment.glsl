@@ -44,7 +44,7 @@ void main()
     sin(time * 1.5f - (gl_FragCoord.y * 1.6f -   gl_FragCoord.x * 1.62f) * 0.061f)            * 0.1f + 
     sin(time * 1.6f + (gl_FragCoord.y * 1.4f -   gl_FragCoord.x * 1.53f) * 0.065f)            * 0.1f;
 
-    FragColor = vec4(1.0f, 1.0f, 1.0f, float(pulse >= 0.65f) * 0.4f +                       // main water blobs
-    float(pulse <= 0.52f && pulse >= 0.48f && sparcles >= 0.56f) * 0.6f +                   // little water outlines
-    float(pulse <= 0.515f && pulse >= 0.485f) * sparcles * 0.25f);                          // sparcles
+    FragColor = vec4(0.9f, 1.0f, 1.0f, float(pulse >= 0.65f) * 0.1f * (sparcles +  0.5f) +          // main water blobs
+    float(pulse <= 0.52f && pulse >= 0.48f && sparcles >= 0.56f) * 0.5f +                           // little water outlines
+    float(pulse <= 0.515f && pulse >= 0.485f) * sparcles * 0.25f);                                  // sparcles
 }
