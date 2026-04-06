@@ -28,11 +28,11 @@ typedef struct ComputeSpriteInstance
 	float r, g, b, a;
 } ComputeSpriteInstance;
 
-static const Uint32 SPRITE_COUNT = 8192;
+static const Uint32 SPRITE_COUNT = 10000;
 
 static int Init(Context* context)
 {
-	int result = CommonInit(context, 0);
+	int result = CommonInit(context, SDL_WINDOW_RESIZABLE);
 	if (result < 0)
 	{
 		return result;
@@ -342,14 +342,16 @@ static int Draw(Context* context)
 			SpriteComputeTransferBuffer,
 			true
 		);
+		SDL_srand(0);
 
-		for (Uint32 i = 0; i < SPRITE_COUNT; i += 1)
+
+		for (Uint32 i = 0; i < SPRITE_COUNT; ++i)
 		{
 			Sint32 ravioli = SDL_rand(4);
 			dataPtr[i].x = (float)(SDL_rand(640));
 			dataPtr[i].y = (float)(SDL_rand(480));
 			dataPtr[i].z = 0;
-			dataPtr[i].rotation = SDL_randf() * SDL_PI_F * 2;
+			dataPtr[i].rotation = 0;
 			dataPtr[i].w = 32;
 			dataPtr[i].h = 32;
 			dataPtr[i].tex_u = uCoords[ravioli];
