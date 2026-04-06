@@ -41,6 +41,9 @@ void renderingLoop(SDL_Window* win) {
     // tile rendering
     while (running)
     {  
+
+        SDL_FlushRenderer(rend);
+
         screen.ofsetX = screen.w * 0.5;
         screen.ofsetY = screen.h * 0.5;
         screen.tempOfsetX = std::floor(screen.ofsetX - screen.posX);

@@ -16,9 +16,9 @@ layout(std430, binding = 0) readonly buffer DataBuffer {
 };
 
 // cbuffer translates to a UBO (Uniform Buffer Object)
-layout(std140, binding = 1) uniform UniformBlock {
-    mat4 ViewProjectionMatrix;
-};
+// layout(std140, binding = 1) uniform UniformBlock {
+//     mat4 ViewProjectionMatrix;
+// };
 
 // GLSL requires explicit type constructors for arrays
 const uint triangleIndices[6] = uint[](0, 1, 2, 3, 2, 1);
@@ -66,7 +66,7 @@ void main()
     vec3 coordWithDepth = vec3(coord + sprite.Position.xy, sprite.Position.z);
 
     // GLSL uses the * operator instead of mul()
-    gl_Position = ViewProjectionMatrix * vec4(coordWithDepth, 1.0);
+    gl_Position = vec4(coordWithDepth, 1.0);
     outTexcoord = texcoord[vert];
     outColor = sprite.Color;
 }

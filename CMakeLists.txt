@@ -8,7 +8,7 @@ set(CMAKE_MAKE_PROGRAM ninja)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # for release
-set(CMAKE_CXX_FLAGS -mwindows)
+set(CMAKE_CXX_FLAGS) # -mwindows)
 
 set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/data/images/logo.rc")
 
