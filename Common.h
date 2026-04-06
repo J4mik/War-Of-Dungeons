@@ -2,6 +2,7 @@
 #define SDL_GPU_EXAMPLES_H
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_image.h>
 
 typedef struct Context
 {
@@ -16,7 +17,7 @@ typedef struct Context
 	float DeltaTime;
 } Context;
 
-int CommonInit(Context* context, SDL_WindowFlags windowFlags);
+int CommonInit(Context* context, SDL_WindowFlags windowFlags, int windowX, int windowY);
 void CommonQuit(Context* context);
 
 void InitializeAssetLoader();
@@ -81,20 +82,7 @@ Vector3 Vector3_Normalize(Vector3 vec);
 float Vector3_Dot(Vector3 vecA, Vector3 vecB);
 Vector3 Vector3_Cross(Vector3 vecA, Vector3 vecB);
 
-// Examples
-typedef struct Example
-{
-	const char* Name;
-	int (*Init)(Context* context);
-	int (*Update)(Context* context);
-	int (*Draw)(Context* context);
-	void (*Quit)(Context* context);
-} Example;
 
-extern Example BasicCompute_Example;
-extern Example ComputeUniforms_Example;
-extern Example ComputeSpriteBatch_Example;
-extern Example PullSpriteBatch_Example;
 
 
 #endif

@@ -1,44 +1,52 @@
 #include "Common.h"
 #include <SDL3/SDL_main.h>
 
-static Example* Examples[] =
-{
-	// &ComputeUniforms_Example,
-	&ComputeSpriteBatch_Example,
-	// &PullSpriteBatch_Example,
-};
+// #include <thread>
+// #include <vector>
+#include "game.hpp"
+#include "src/audio.hpp"
+#include "src/render.hpp"
 
-bool AppLifecycleWatcher(void *userdata, SDL_Event *event)
-{
-	/* This callback may be on a different thread, so let's
-	 * push these events as USER events so they appear
-	 * in the main thread's event loop.
-	 *
-	 * That allows us to cancel drawing before/after we finish
-	 * drawing a frame, rather than mid-draw (which can crash!).
-	 */
-	if (event->type == SDL_EVENT_DID_ENTER_BACKGROUND)
-	{
-		SDL_Event evt;
-		evt.type = SDL_EVENT_USER;
-		evt.user.code = 0;
-		SDL_PushEvent(&evt);
-	}
-	else if (event->type == SDL_EVENT_WILL_ENTER_FOREGROUND)
-	{
-		SDL_Event evt;
-		evt.type = SDL_EVENT_USER;
-		evt.user.code = 1;
-		SDL_PushEvent(&evt);
-	}
-	return false;
-}
+#define PLAYERSPEED 0.36
 
-int main(int argc, char **argv)
+int spawnX = 0;
+int spawnY = 0;
+
+static SDL_GPUComputePipeline* ComputePipeline;
+static SDL_GPUGraphicsPipeline* RenderPipeline;
+static SDL_GPUSampler* Sampler;
+static SDL_GPUTexture* Texture;
+static SDL_GPUTransferBuffer* SpriteComputeTransferBuffer;
+static SDL_GPUBuffer* SpriteComputeBuffer;
+static SDL_GPUBuffer* SpriteVertexBuffer;
+static SDL_GPUBuffer* SpriteIndexBuffer;
+
+typedef struct PositionTextureColorVertex
+{
+	float x, y, z, w;
+	float u, v, padding_a, padding_b;
+	float r, g, b, a;
+} PositionTextureColorVertex;
+
+typedef struct ComputeSpriteInstance
+{
+	float x, y, z;
+	float rotation;
+	float w, h, padding_a, padding_b;
+	float tex_u, tex_v, tex_w, tex_h;
+	float r, g, b, a;
+} ComputeSpriteInstance;
+
+static const Uint32 SPRITE_COUNT = 64;
+
+static float uCoords[4] = { 0.0f, 0.5f, 0.0f, 0.5f};
+static float vCoords[4] = { 0.0f, 0.0f, 0.5f, 0.5f};
+
+static float colorKey[4] = {1.0f, 0.0f, 1.0f, 1.0f};
+
+int main(int argc, char* argv[])
 {
 	Context context = { 0 };
-	int exampleIndex = -1;
-	int gotoExampleIndex = 0;
 	int quit = 0;
 	float lastTime = 0;
 
@@ -48,22 +56,6 @@ int main(int argc, char **argv)
 		{
 			const char* exampleName = argv[i + 1];
 			int foundExample = 0;
-
-			for (int j = 0; j < SDL_arraysize(Examples); j += 1)
-			{
-				if (SDL_strcmp(Examples[j]->Name, exampleName) == 0)
-				{
-					gotoExampleIndex = j;
-					foundExample = 1;
-					break;
-				}
-			}
-
-			if (!foundExample)
-			{
-				SDL_Log("No example named '%s' exists.", exampleName);
-				return 1;
-			}
 		}
 	}
 
@@ -74,10 +66,276 @@ int main(int argc, char **argv)
 	}
 
 	InitializeAssetLoader();
-	SDL_AddEventWatch(AppLifecycleWatcher, NULL);
 
 	SDL_Gamepad* gamepad = NULL;
 	bool canDraw = true;
+
+	int result = CommonInit(&context, SDL_WINDOW_RESIZABLE, screen.w, screen.h);
+	if (result < 0)
+	{
+		return result;
+	}
+
+	SDL_GPUPresentMode presentMode = SDL_GPU_PRESENTMODE_VSYNC;
+	if (SDL_WindowSupportsGPUPresentMode(
+		(&context)->Device,
+		(&context)->Window,
+		SDL_GPU_PRESENTMODE_IMMEDIATE
+	)) {
+		presentMode = SDL_GPU_PRESENTMODE_IMMEDIATE;
+	}
+	else if (SDL_WindowSupportsGPUPresentMode(
+		(&context)->Device,
+		(&context)->Window,
+		SDL_GPU_PRESENTMODE_MAILBOX
+	)) {
+		presentMode = SDL_GPU_PRESENTMODE_MAILBOX;
+	}
+
+	SDL_SetGPUSwapchainParameters(
+		(&context)->Device,
+		(&context)->Window,
+		SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+		presentMode
+	);
+
+	SDL_srand(0);
+
+	// Create the shaders
+	SDL_GPUShader* vertShader = LoadShader(
+		(&context)->Device,
+		"TexturedQuadColorWithMatrix.vert",
+		0,
+		1,
+		0,
+		0
+	);
+
+	SDL_GPUShader* fragShader = LoadShader(
+		(&context)->Device,
+		"TexturedQuadColor.frag",
+		1,
+		0,
+		0,
+		0
+	);
+
+	// Create the sprite render pipeline
+	RenderPipeline = SDL_CreateGPUGraphicsPipeline(
+		(&context)->Device,
+		&(SDL_GPUGraphicsPipelineCreateInfo){
+			.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+				.num_color_targets = 1,
+				.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+					.format = SDL_GetGPUSwapchainTextureFormat((&context)->Device, (&context)->Window),
+					.blend_state = {
+						.enable_blend = true,
+						.color_blend_op = SDL_GPU_BLENDOP_ADD,
+						.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+						.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+						.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+						.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+						.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+					}
+				}}
+			},
+			.vertex_input_state = (SDL_GPUVertexInputState){
+				.num_vertex_buffers = 1,
+				.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+					.slot = 0,
+					.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+					.instance_step_rate = 0,
+					.pitch = sizeof(PositionTextureColorVertex)
+				}},
+				.num_vertex_attributes = 3,
+				.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+					.buffer_slot = 0,
+					.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+					.location = 0,
+					.offset = 0
+				}, {
+					.buffer_slot = 0,
+					.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+					.location = 1,
+					.offset = 16
+				}, {
+					.buffer_slot = 0,
+					.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+					.location = 2,
+					.offset = 32
+				}}
+			},
+			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+			.vertex_shader = vertShader,
+			.fragment_shader = fragShader
+		}
+	);
+
+	SDL_ReleaseGPUShader((&context)->Device, vertShader);
+	SDL_ReleaseGPUShader((&context)->Device, fragShader);
+
+	// Create the sprite batch compute pipeline
+	ComputePipeline = CreateComputePipelineFromShader(
+		(&context)->Device,
+		"SpriteBatch.comp",
+		&(SDL_GPUComputePipelineCreateInfo){
+			.num_readonly_storage_buffers = 1,
+			.num_readwrite_storage_buffers = 1,
+			.threadcount_x = 64,
+			.threadcount_y = 1,
+			.threadcount_z = 1
+		}
+	);
+
+	// Load the image data
+	SDL_Surface *imageData = LoadImage("data/images/player.png", 4);
+	if (imageData == NULL)
+	{
+		SDL_Log("Could not load image data!");
+		return -1;
+	}
+
+	SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(
+		(&context)->Device,
+		&(SDL_GPUTransferBufferCreateInfo) {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = imageData->w * imageData->h * 4
+		}
+	);
+
+	Uint8 *textureTransferPtr = SDL_MapGPUTransferBuffer(
+		(&context)->Device,
+		textureTransferBuffer,
+		false
+	);
+	SDL_memcpy(textureTransferPtr, imageData->pixels, imageData->w * imageData->h * 4);
+	SDL_UnmapGPUTransferBuffer((&context)->Device, textureTransferBuffer);
+
+	// Create the GPU resources
+	Texture = SDL_CreateGPUTexture(
+		(&context)->Device,
+		&(SDL_GPUTextureCreateInfo){
+			.type = SDL_GPU_TEXTURETYPE_2D,
+			.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+			.width = imageData->w,
+			.height = imageData->h,
+			.layer_count_or_depth = 1,
+			.num_levels = 1,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+		}
+	);
+
+	Sampler = SDL_CreateGPUSampler(
+		(&context)->Device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_NEAREST,
+			.mag_filter = SDL_GPU_FILTER_NEAREST,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE
+		}
+	);
+
+	SpriteComputeTransferBuffer = SDL_CreateGPUTransferBuffer(
+		(&context)->Device,
+		&(SDL_GPUTransferBufferCreateInfo) {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = SPRITE_COUNT * sizeof(ComputeSpriteInstance)
+		}
+	);
+
+	SpriteComputeBuffer = SDL_CreateGPUBuffer(
+		(&context)->Device,
+		&(SDL_GPUBufferCreateInfo) {
+			.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
+			.size = SPRITE_COUNT * sizeof(ComputeSpriteInstance)
+		}
+	);
+
+	SpriteVertexBuffer = SDL_CreateGPUBuffer(
+		(&context)->Device,
+		&(SDL_GPUBufferCreateInfo) {
+			.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE | SDL_GPU_BUFFERUSAGE_VERTEX,
+			.size = SPRITE_COUNT * 4 * sizeof(PositionTextureColorVertex)
+		}
+	);
+
+	SpriteIndexBuffer = SDL_CreateGPUBuffer(
+		(&context)->Device,
+		&(SDL_GPUBufferCreateInfo) {
+			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
+			.size = SPRITE_COUNT * 6 * sizeof(Uint32)
+		}
+	);
+
+	// Transfer the up-front data
+	SDL_GPUTransferBuffer* indexBufferTransferBuffer = SDL_CreateGPUTransferBuffer(
+		(&context)->Device,
+		&(SDL_GPUTransferBufferCreateInfo) {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = SPRITE_COUNT * 6 * sizeof(Uint32)
+		}
+	);
+
+	Uint32* indexTransferPtr = SDL_MapGPUTransferBuffer(
+		(&context)->Device,
+		indexBufferTransferBuffer,
+		false
+	);
+
+	for (Uint32 i = 0, j = 0; i < SPRITE_COUNT * 6; i += 6, j += 4)
+	{
+		indexTransferPtr[i]     =  j;
+		indexTransferPtr[i + 1] =  j + 1;
+		indexTransferPtr[i + 2] =  j + 2;
+		indexTransferPtr[i + 3] =  j + 3;
+		indexTransferPtr[i + 4] =  j + 2;
+		indexTransferPtr[i + 5] =  j + 1;
+	}
+
+	SDL_UnmapGPUTransferBuffer(
+		(&context)->Device,
+		indexBufferTransferBuffer
+	);
+
+	SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer((&context)->Device);
+	SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
+
+	SDL_UploadToGPUTexture(
+		copyPass,
+		&(SDL_GPUTextureTransferInfo) {
+			.transfer_buffer = textureTransferBuffer,
+			.offset = 0, /* Zeroes out the rest */
+		},
+		&(SDL_GPUTextureRegion){
+			.texture = Texture,
+			.w = imageData->w,
+			.h = imageData->h,
+			.d = 1
+		},
+		false
+	);
+
+	SDL_UploadToGPUBuffer(
+		copyPass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = indexBufferTransferBuffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = SpriteIndexBuffer,
+			.offset = 0,
+			.size = SPRITE_COUNT * 6 * sizeof(Uint32)
+		},
+		false
+	);
+
+	SDL_DestroySurface(imageData);
+	SDL_EndGPUCopyPass(copyPass);
+	SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+	SDL_ReleaseGPUTransferBuffer((&context)->Device, textureTransferBuffer);
+	SDL_ReleaseGPUTransferBuffer((&context)->Device, indexBufferTransferBuffer);
 
 	while (!quit)
 	{
@@ -86,160 +344,179 @@ int main(int argc, char **argv)
 		context.DownPressed = 0;
 		context.UpPressed = 0;
 
-		SDL_Event evt;
-		while (SDL_PollEvent(&evt))
-		{
-			if (evt.type == SDL_EVENT_QUIT)
-			{
-				if (exampleIndex != -1)
-				{
-					Examples[exampleIndex]->Quit(&context);
-				}
-				quit = 1;
-			}
-			else if (evt.type == SDL_EVENT_GAMEPAD_ADDED)
-			{
-				if (gamepad == NULL)
-				{
-					gamepad = SDL_OpenGamepad(evt.gdevice.which);
-				}
-			}
-			else if (evt.type == SDL_EVENT_GAMEPAD_REMOVED)
-			{
-				if (evt.gdevice.which == SDL_GetGamepadID(gamepad))
-				{
-					SDL_CloseGamepad(gamepad);
-				}
-			}
-			else if (evt.type == SDL_EVENT_USER)
-			{
-				if (evt.user.code == 0)
-				{
-#ifdef SDL_PLATFORM_GDK
-					SDL_GDKSuspendGPU(context.Device);
-					canDraw = false;
-					SDL_GDKSuspendComplete();
-#endif
-				}
-				else if (evt.user.code == 1)
-				{
-#ifdef SDL_PLATFORM_GDK
-					SDL_GDKResumeGPU(context.Device);
-					canDraw = true;
-#endif
-				}
-			}
-			else if (evt.type == SDL_EVENT_KEY_DOWN)
-			{
-				if (evt.key.key == SDLK_D)
-				{
-					gotoExampleIndex = exampleIndex + 1;
-					if (gotoExampleIndex >= SDL_arraysize(Examples)) {
-						gotoExampleIndex = 0;
-					}
-				}
-				else if (evt.key.key == SDLK_A)
-				{
-					gotoExampleIndex = exampleIndex - 1;
-					if (gotoExampleIndex < 0) {
-						gotoExampleIndex = SDL_arraysize(Examples) - 1;
-					}
-				}
-				else if (evt.key.key == SDLK_LEFT)
-				{
-					context.LeftPressed = true;
-				}
-				else if (evt.key.key == SDLK_RIGHT)
-				{
-					context.RightPressed = true;
-				}
-				else if (evt.key.key == SDLK_DOWN)
-				{
-					context.DownPressed = true;
-				}
-				else if (evt.key.key == SDLK_UP)
-				{
-					context.UpPressed = true;
-				}
-			}
-			else if (evt.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
-			{
-				if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)
-				{
-					gotoExampleIndex = exampleIndex + 1;
-					if (gotoExampleIndex >= SDL_arraysize(Examples)) {
-						gotoExampleIndex = 0;
-					}
-				}
-				else if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_LEFT_SHOULDER)
-				{
-					gotoExampleIndex = exampleIndex - 1;
-					if (gotoExampleIndex < 0) {
-						gotoExampleIndex = SDL_arraysize(Examples) - 1;
-					}
-				}
-				else if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_DPAD_LEFT)
-				{
-					context.LeftPressed = true;
-				}
-				else if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_DPAD_RIGHT)
-				{
-					context.RightPressed = true;
-				}
-				else if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_DPAD_DOWN)
-				{
-					context.DownPressed = true;
-				}
-				else if (evt.gbutton.button == SDL_GAMEPAD_BUTTON_DPAD_UP)
-				{
-					context.UpPressed = true;
-				}
-			}
-		}
-		if (quit)
-		{
-			break;
-		}
+		game(&context.Window);
 
-		if (gotoExampleIndex != -1)
-		{
-			if (exampleIndex != -1)
-			{
-				Examples[exampleIndex]->Quit(&context);
-				SDL_zero(context);
-			}
-
-			exampleIndex = gotoExampleIndex;
-			context.ExampleName = Examples[exampleIndex]->Name;
-			SDL_Log("STARTING EXAMPLE: %s", context.ExampleName);
-			if (Examples[exampleIndex]->Init(&context) < 0)
-			{
-				SDL_Log("Init failed!");
-				return 1;
-			}
-
-			gotoExampleIndex = -1;
-		}
-
+		// issues a draw call
 		float newTime = SDL_GetTicks() / 1000.0f;
 		context.DeltaTime = newTime - lastTime;
 		lastTime = newTime;
 
-		if (Examples[exampleIndex]->Update(&context) < 0)
+		Matrix4x4 cameraMatrix = Matrix4x4_CreateOrthographicOffCenter(
+		0,
+		640,
+		480,
+		0,
+		0,
+		-1
+	);
+
+    SDL_GPUCommandBuffer* cmdBuf = SDL_AcquireGPUCommandBuffer((&context)->Device);
+    if (cmdBuf == NULL)
+    {
+        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return -1;
+    }
+
+    SDL_GPUTexture* swapchainTexture;
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdBuf, (&context)->Window, &swapchainTexture, NULL, NULL)) {
+        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        return -1;
+    }
+
+	if (swapchainTexture != NULL)
+	{
+		// Build sprite instance transfer
+		ComputeSpriteInstance* dataPtr = SDL_MapGPUTransferBuffer(
+			(&context)->Device,
+			SpriteComputeTransferBuffer,
+			true
+		);
+		SDL_srand(0);
+
+
+		for (Uint32 i = 0; i < SPRITE_COUNT; ++i)
 		{
-			SDL_Log("Update failed!");
-			return 1;
+			Sint32 ravioli = SDL_rand(4);
+			dataPtr[i].x = (float)(SDL_rand(640));
+			dataPtr[i].y = (float)(SDL_rand(480));
+			dataPtr[i].z = 0;
+			dataPtr[i].rotation = 0;
+			dataPtr[i].w = 32;
+			dataPtr[i].h = 32;
+			dataPtr[i].tex_u = uCoords[ravioli];
+			dataPtr[i].tex_v = vCoords[ravioli];
+			dataPtr[i].tex_w = 0.5f;
+			dataPtr[i].tex_h = 0.5f;
+			dataPtr[i].r = 1.0f;
+			dataPtr[i].g = 1.0f;
+			dataPtr[i].b = 1.0f;
+			dataPtr[i].a = 1.0f;
 		}
 
-		if (canDraw)
-		{
-			if (Examples[exampleIndex]->Draw(&context) < 0)
-			{
-				SDL_Log("Draw failed!");
-				return 1;
-			}
-		}
+		SDL_UnmapGPUTransferBuffer((&context)->Device, SpriteComputeTransferBuffer);
+
+		// Upload instance data
+		SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmdBuf);
+		SDL_UploadToGPUBuffer(
+			copyPass,
+			&(SDL_GPUTransferBufferLocation) {
+				.transfer_buffer = SpriteComputeTransferBuffer,
+				.offset = 0
+			},
+			&(SDL_GPUBufferRegion) {
+				.buffer = SpriteComputeBuffer,
+				.offset = 0,
+				.size = SPRITE_COUNT * sizeof(ComputeSpriteInstance)
+			},
+			true
+		);
+		SDL_EndGPUCopyPass(copyPass);
+
+		// Set up compute pass to build vertex buffer
+		SDL_GPUComputePass* computePass = SDL_BeginGPUComputePass(
+			cmdBuf,
+			NULL,
+			0,
+			&(SDL_GPUStorageBufferReadWriteBinding){
+				.buffer = SpriteVertexBuffer,
+				.cycle = true
+			},
+			1
+		);
+
+		SDL_BindGPUComputePipeline(computePass, ComputePipeline);
+		SDL_BindGPUComputeStorageBuffers(
+			computePass,
+			0,
+			&(SDL_GPUBuffer*){
+				SpriteComputeBuffer,
+			},
+			1
+		);
+		SDL_DispatchGPUCompute(computePass, SPRITE_COUNT / 64, 1, 1);
+
+		SDL_EndGPUComputePass(computePass);
+
+		// Render sprites
+		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
+			cmdBuf,
+			&(SDL_GPUColorTargetInfo){
+				.texture = swapchainTexture,
+				.cycle = false,
+				.load_op = SDL_GPU_LOADOP_CLEAR,
+				.store_op = SDL_GPU_STOREOP_STORE,
+				.clear_color = {colorKey[0], colorKey[1], colorKey[2], colorKey[3]}
+			},
+			1,
+			NULL
+		);
+
+		SDL_BindGPUGraphicsPipeline(renderPass, RenderPipeline);
+		SDL_BindGPUVertexBuffers(
+			renderPass,
+			0,
+			&(SDL_GPUBufferBinding){
+				.buffer = SpriteVertexBuffer
+			},
+			1
+		);
+		SDL_BindGPUIndexBuffer(
+			renderPass,
+			&(SDL_GPUBufferBinding){
+				.buffer = SpriteIndexBuffer
+			},
+			SDL_GPU_INDEXELEMENTSIZE_32BIT
+		);
+		SDL_BindGPUFragmentSamplers(
+			renderPass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = Texture,
+				.sampler = Sampler
+			},
+			1
+		);
+		SDL_PushGPUVertexUniformData(
+			cmdBuf,
+			0,
+			&cameraMatrix,
+			sizeof(Matrix4x4)
+		);
+		SDL_DrawGPUIndexedPrimitives(
+			renderPass,
+			SPRITE_COUNT * 6,
+			1,
+			0,
+			0,
+			0
+		);
+
+		SDL_EndGPURenderPass(renderPass);
 	}
+
+	SDL_SubmitGPUCommandBuffer(cmdBuf);
+	}
+
+	SDL_ReleaseGPUComputePipeline((&context)->Device, ComputePipeline);
+	SDL_ReleaseGPUGraphicsPipeline((&context)->Device, RenderPipeline);
+	SDL_ReleaseGPUSampler((&context)->Device, Sampler);
+	SDL_ReleaseGPUTexture((&context)->Device, Texture);
+	SDL_ReleaseGPUTransferBuffer((&context)->Device, SpriteComputeTransferBuffer);
+	SDL_ReleaseGPUBuffer((&context)->Device, SpriteComputeBuffer);
+	SDL_ReleaseGPUBuffer((&context)->Device, SpriteVertexBuffer);
+	SDL_ReleaseGPUBuffer((&context)->Device, SpriteIndexBuffer);
+
+	CommonQuit(&context);
 
 	return 0;
 }

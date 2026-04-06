@@ -7,7 +7,7 @@
 #define STBI_ONLY_HDR
 #include "stb_image.h"
 
-int CommonInit(Context* context, SDL_WindowFlags windowFlags)
+int CommonInit(Context* context, SDL_WindowFlags windowFlags, int windowX, int windowY)
 {
 	context->Device = SDL_CreateGPUDevice(
 		SDL_GPU_SHADERFORMAT_SPIRV, // | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
@@ -20,7 +20,7 @@ int CommonInit(Context* context, SDL_WindowFlags windowFlags)
 		return -1;
 	}
 
-	context->Window = SDL_CreateWindow(context->ExampleName, 640, 480, windowFlags);
+	context->Window = SDL_CreateWindow(context->ExampleName, windowX, windowY, windowFlags);
 	if (context->Window == NULL)
 	{
 		SDL_Log("CreateWindow failed: %s", SDL_GetError());
@@ -79,15 +79,15 @@ SDL_GPUShader* LoadShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/SPIRV/%s.spv", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/MSL/%s.msl", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/DXIL/%s.dxil", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {
@@ -137,15 +137,15 @@ SDL_GPUComputePipeline* CreateComputePipelineFromShader(
 	const char *entrypoint;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/SPIRV/%s.spv", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/SPIRV/%s.spv", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/MSL/%s.msl", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/MSL/%s.msl", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
-		entrypoint = "main0";
+		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Shaders/Compiled/DXIL/%s.dxil", BasePath, shaderFilename);
+		SDL_snprintf(fullPath, sizeof(fullPath), "Content/Shaders/Compiled/DXIL/%s.dxil", shaderFilename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 		entrypoint = "main";
 	} else {
@@ -186,9 +186,9 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	SDL_Surface *result;
 	SDL_PixelFormat format;
 
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Images/%s", BasePath, imageFilename);
+	SDL_snprintf(fullPath, sizeof(fullPath), imageFilename);
 
-	result = SDL_LoadBMP(fullPath);
+	result = IMG_Load(fullPath);
 	if (result == NULL)
 	{
 		SDL_Log("Failed to load BMP: %s", SDL_GetError());
@@ -213,13 +213,6 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	}
 
 	return result;
-}
-
-float* LoadHDRImage(const char* imageFilename, int* pWidth, int* pHeight, int* pChannels, int desiredChannels)
-{
-	char fullPath[256];
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Images/%s", BasePath, imageFilename);
-	return stbi_loadf(fullPath, pWidth, pHeight, pChannels, desiredChannels);
 }
 
 typedef struct ASTCHeader
