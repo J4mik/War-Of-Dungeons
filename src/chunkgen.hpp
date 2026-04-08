@@ -1,4 +1,5 @@
-#pragma once
+#ifndef chunkgen_h
+#define chunkgen_h
 
 #define FREQUENCY1 0.004 // should be between 0.1 and 64
 #define MULTIPLIER1 0.7
@@ -17,12 +18,14 @@
 #define SEED 72
 
 // generates values for spaghetti caves
-double calculateSpaghettiCave(std::int32_t x, std::int32_t y);
+double calculateSpaghettiCave(int x, int y);
 
 // calculates values for swiss cheese caves
-double calculateSwissCheeseCave(std::int32_t x, std::int32_t y);
+double calculateSwissCheeseCave(int x, int y);
 
 // generates multipliers for the cave types
-double calculateHeight(std::int32_t x, std::int32_t y);
+double calculateHeight(int x, int y);
 
-int generateBiome(std::int32_t x, std::int32_t y, bool* tile);
+int generateBiome(int x, int y, bool* tile);
+
+#endif

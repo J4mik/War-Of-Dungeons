@@ -1,10 +1,21 @@
 #include <thread>
-#include <vector>
-#include <iostream>
-#include "game.hpp"
 
-void game(SDL_Window* win)
+#include "src/chunkgen.hpp"
+#include "src/engine.hpp"
+#include "src/render.hpp"
+#include "src/level.hpp"
+
+#define PLAYERSPEED 0.36
+
+int spawnX = 0;
+int spawnY = 0;
+
+int main(int argc, char* argv[])
 {
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_Window* win = SDL_CreateWindow("War of Dungeons", screen.w, screen.h, SDL_WINDOW_RESIZABLE);
+
     // Text ByteBounce("data/fonts/ByteBounce.ttf", 80);/
 
     inputs();
@@ -12,7 +23,7 @@ void game(SDL_Window* win)
 
     expDecay decay;
 
-    decay.init("./data/num.bin");
+    decay.init();
 
     srand(SEED);
 

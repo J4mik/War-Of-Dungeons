@@ -1,3 +1,7 @@
+#include <cmath>
+
+#include "level.hpp"
+#include "engine.hpp"
 #include "render.hpp"
 
 void loadTiles(SDL_Renderer* rend)
@@ -79,8 +83,6 @@ void getTile(uint8_t tile)
 
 
 void renderingLoop(SDL_Window* win) {
-    expDecay decay;
-
     SDL_FRect playerPos{0, 0, 32, 42};
 
     SDL_FRect tempOverlay{0, 0, 16, 16};
@@ -89,22 +91,14 @@ void renderingLoop(SDL_Window* win) {
     SDL_FRect clip{0, 0, 16, 16};
     SDL_FRect temp{0, 0, TILESIZE, TILESIZE};
 
-    SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV || SDL_GPU_SHADERFORMAT_MSL || SDL_GPU_SHADERFORMAT_DXIL, false, nullptr);
-
-    SDL_ClaimWindowForGPUDevice(device, win);
-
-    SDL_Renderer* rend = SDL_CreateGPURenderer(win, 0, &device);
+    SDL_Renderer* rend = SDL_CreateRenderer(win, NULL);
     SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-
 
     loadTiles(rend);
 
     // tile rendering
     while (running)
     {  
-
-        SDL_FlushRenderer(rend);
-
         screen.ofsetX = screen.w * 0.5;
         screen.ofsetY = screen.h * 0.5;
         screen.tempOfsetX = std::floor(screen.ofsetX - screen.posX);
@@ -117,22 +111,6 @@ void renderingLoop(SDL_Window* win) {
         SDL_RenderClear(rend);
 
         SDL_SetRenderDrawColor(rend, 30, 100, 255, 255);
-
-        SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(device);
-
-        // get the swapchain texture
-        SDL_GPUTexture* swapchainTexture;
-        Uint32 width, height;
-        // SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, win, &swapchainTexture, &width, &height);
-
-        SDL_GPUColorTargetInfo colorTargetInfo{};
-        colorTargetInfo.clear_color = {240/255.0f, 240/255.0f, 240/255.0f, 255/255.0f};
-        colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-        colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-        // colorTargetInfo.texture = swapchainTexture;
-
-        // begin a render pass
-        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
 
         // checks if chunks are on the screen
         for (int i = 0; i < chunks.size(); ++i)
@@ -219,13 +197,5 @@ void renderingLoop(SDL_Window* win) {
 
         // draw something
         SDL_RenderPresent(rend);
-
-        // // end the render pass
-        // SDL_EndGPURenderPass(renderPass);
-
-        // // submit the command buffer
-        // SDL_SubmitGPUCommandBuffer(commandBuffer);
-
-
     }
 }

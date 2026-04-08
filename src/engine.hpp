@@ -1,21 +1,24 @@
-#pragma once
+#ifndef engine_h
+#define engine_h
+
+#include <fstream>
+#include <iostream>
+#include <stdint.h>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_image.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_shadercross.h>
-#include <fstream>
-#include <iostream>
-
+// #include <math.h>
 
 uint64_t lastTick;
 uint16_t deltaTime;
 
 struct
 {
-    int w = 1200;
-    int h = 700;
+    int w;
+    int h;
     float ofsetX;
     float ofsetY;
     float posX;
@@ -60,39 +63,138 @@ class expDecay
 public:
     double pow255[5000] = {};
 
-    void init(std::basic_string<char> path)
+    void init()
     {
+    std::basic_string<char> path = "./data/num.bin";
 
-        std::ifstream FileStream;
-        FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
+    std::ifstream FileStream;
+    FileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    try
+    {
+        FileStream.open(path, std::ios::in | std::ios::binary);
+        for (int i = 0; i < 5000; ++i)
         {
-            FileStream.open(path, std::ios::in | std::ios::binary);
-            for (int i = 0; i < 5000; ++i)
+            FileStream.read((char*)&pow255[i], 8);
+        }
+        FileStream.close();
+    }
+    catch (std::ifstream::failure& error)
+    {
+        std::cout << "Error";
+        if (!pow255[0] == 1)
+        {
+            std::cout << " reading from file '" << path << "', recreating file contents\n";
+            std::ofstream FileStream;
+            FileStream.open(path, std::ios::out | std::ios::binary);
+            pow255[0] = 1;
+           FileStream.write((char*)&pow255[0], 8);
+            for (int i = 1; i < 5000; ++i)
             {
-                FileStream.read((char*)&pow255[i], 8);
+                pow255[i] = pow255[i - 1] * 0.995;
+                FileStream.write((char*)&pow255[i], 8);
             }
             FileStream.close();
         }
-        catch (std::ifstream::failure& error)
-        {
-            std::cout << "Error";
-            if (!pow255[0] == 1)
-            {
-                std::cout << " reading from file '" << path << "', recreating file contents\n";
-                std::ofstream FileStream;
-                FileStream.open(path, std::ios::out | std::ios::binary);
-                pow255[0] = 1;
-                FileStream.write((char*)&pow255[0], 8);
-                for (int i = 1; i < 5000; ++i)
-                {
-                    pow255[i] = pow255[i - 1] * 0.995;
-                    FileStream.write((char*)&pow255[i], 8);
-                }
-                FileStream.close();
-            }
-        }
     }
+}
 };
 
-void inputs();
+void inputs()
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+        case SDL_EVENT_QUIT:
+            running = 0;
+            break;
+        case SDL_EVENT_KEY_DOWN:
+            switch (event.key.scancode)
+            {
+            case SDL_SCANCODE_W:
+                key.w = 1;
+                break;
+            case SDL_SCANCODE_A:
+                key.a = 1;
+                break;
+            case SDL_SCANCODE_S:
+                key.s = 1;
+                break;
+            case SDL_SCANCODE_D:
+                key.d = 1;
+                break;
+
+            case SDL_SCANCODE_R:
+                key.r = 1;
+                break;
+
+            case SDL_SCANCODE_UP:
+                key.upArrow = 1;
+                break;
+            case SDL_SCANCODE_LEFT:
+                key.leftArrow = 1;
+                break;
+            case SDL_SCANCODE_DOWN:
+                key.downArrow = 1;
+                break;
+            case SDL_SCANCODE_RIGHT:
+                key.rightArrow = 1;
+                break;
+            }
+            break;
+
+        case SDL_EVENT_KEY_UP:
+            switch (event.key.scancode)
+            {
+            case SDL_SCANCODE_W:
+                key.w = 0;
+                break;
+            case SDL_SCANCODE_A:
+                key.a = 0;
+                break;
+            case SDL_SCANCODE_S:
+                key.s = 0;
+                break;
+            case SDL_SCANCODE_D:
+                key.d = 0;
+                break;
+            case SDL_SCANCODE_R:
+                key.r = 0;
+                break;
+
+            case SDL_SCANCODE_UP:
+                key.upArrow = 0;
+                break;
+
+            case SDL_SCANCODE_LEFT:
+                key.leftArrow = 0;
+                break;
+            case SDL_SCANCODE_DOWN:
+                key.downArrow = 0;
+                break;
+            case SDL_SCANCODE_RIGHT:
+                key.rightArrow = 0;
+                break;
+            }
+            break;
+
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            mouseX = event.motion.x;
+            mouseY = event.motion.y;
+            break;
+        }
+    }
+
+
+    deltaTime = SDL_GetTicks() - lastTick;
+    if (deltaTime > 250)
+    {
+        deltaTime = 0;
+    }
+    lastTick = SDL_GetTicks();
+}
+
+
+#endif

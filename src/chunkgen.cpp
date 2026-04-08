@@ -1,7 +1,6 @@
-#pragma once
-
 #include "../include/perlin/perlin.hpp"
 #include "chunkgen.hpp"
+#include "engine.hpp"
 
 // generates values for spaghetti caves
 double calculateSpaghettiCave(std::int32_t x, std::int32_t y)

@@ -1,5 +1,7 @@
+#ifndef level_h
+#define level_h
 
-#include "chunkgen.hpp"
+#include <vector>
 #include "engine.hpp"
 
 #define TILESIZE 32
@@ -9,13 +11,6 @@
 
 #define GENERATECHUNKOFSCREENOFSET 100
 
-class position
-{
-public:
-    int16_t x;
-    int16_t y;
-};
-
 class tile
 {
 public:
@@ -23,6 +18,13 @@ public:
     int16_t y;
     uint16_t tile;
 };
+
+struct position
+{
+    int x;
+    int y;
+};
+
 
 position tilegridpos[16] = {{0, 48},  {16, 48}, {0, 0},   {48, 0}, {0, 32},  {16, 0},  {32, 48}, {16, 16},
                             {48, 48}, {0, 16},  {48, 32}, {32, 0}, {16, 32}, {32, 32}, {48, 16}, {32, 16}};
@@ -48,4 +50,8 @@ private:
     bool m_stored = false;
 };
 
+std::vector<chunk> chunks{};
+
 void loadChunks();
+
+#endif
