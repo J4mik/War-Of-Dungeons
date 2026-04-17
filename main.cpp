@@ -1,89 +1,39 @@
+extern "C" 
+{
+#include "renderAPI.h"
+}
+
+#include "src/game.hpp"
+
+#include <SDL3/SDL_main.h>
 #include <thread>
 
-#include "src/chunkgen.hpp"
-#include "src/engine.hpp"
-#include "src/render.hpp"
-#include "src/level.hpp"
+void submitSprites(float dt, int w, int h, int quit, keyPress key) 
+{
+    keyboard = {key.w, key.a, key.s, key.d, key.r, key.upArrow, key.leftArrow, key.downArrow, key.rightArrow};
+    deltaTime = dt;
+    screen.w = w; screen.h = h;
+    running = !quit;
+    spriteRenderCall();
+}
 
-#define PLAYERSPEED 0.36
-
-int spawnX = 0;
-int spawnY = 0;
+void spriteRender(spriteInstance spriteData) 
+{
+    renderSprite(ComputeSpriteInstance{
+    spriteData.x, spriteData.y, spriteData.z, 
+    spriteData.rotation,
+    spriteData.w, spriteData.h, spriteData.padding_a, spriteData.padding_b,
+    spriteData.tex_u, spriteData.tex_v, spriteData.tex_w, spriteData.tex_h,
+    spriteData.r, spriteData.g, spriteData.b, spriteData.a});
+}
 
 int main(int argc, char* argv[])
 {
-    SDL_Init(SDL_INIT_VIDEO);
-
-    SDL_Window* win = SDL_CreateWindow("War of Dungeons", screen.w, screen.h, SDL_WINDOW_RESIZABLE);
-
-    // Text ByteBounce("data/fonts/ByteBounce.ttf", 80);/
-
-    inputs();
-    SDL_GetWindowSizeInPixels(win, &screen.w, &screen.h);
-
-    expDecay decay;
-
-    decay.init();
-
-    srand(SEED);
-
-    // calculates player spawn so I'ts always on land
-    while (calculateHeight(spawnX, spawnY) < 0)
-    {
-        spawnX += rand() % 64 - 32;
-        spawnY += rand() % 64 - 32;
-        std::cout << spawnX << ", " << spawnY << "\n";
-    }
-
-    player.x = spawnX * TILESIZE;
-    player.y = spawnY * TILESIZE;
-
-    screen.posX = player.x;
-    screen.posY = player.y;
-
-    inputs();
-
-    std::thread t1(loadChunks);
-
-    std::thread t2(renderingLoop, win);
-
-
-    while (running)
-    {
-        inputs();
-
-        screen.posX -= (screen.posX - player.x) * deltaTime * (1 - decay.pow255[deltaTime]);
-        screen.posY -= (screen.posY - player.y) * deltaTime * (1 - decay.pow255[deltaTime]);
-
-        player.VectX *= decay.pow255[deltaTime * 3];
-        player.VectY *= decay.pow255[deltaTime * 3];
-
-        // player rendering
-        player.VectX += ((key.d || key.rightArrow) - (key.a || key.leftArrow)) *
-            (1 - decay.pow255[deltaTime * 3]) * PLAYERSPEED;
-        player.VectY += ((key.s || key.downArrow) - (key.w || key.upArrow)) *
-            (1 - decay.pow255[deltaTime * 3]) * PLAYERSPEED;
-
-
-        // clamps the player speed
-        if (abs((key.d || key.rightArrow) - (key.a || key.leftArrow)) +
-                abs((key.s || key.downArrow) - (key.w || key.upArrow)) >
-            1)
-        {
-            player.x += player.VectX * 0.72 * deltaTime;
-            player.y += player.VectY * 0.72 * deltaTime;
-        }
-        else
-        {
-            player.x += player.VectX * deltaTime;
-            player.y += player.VectY * deltaTime;
-        }
-
-        SDL_Delay(1);
-    }
+    std::thread t1(game);
+    std::thread t2(loadChunks);
+    renderer();
     running = 0;
     t1.join();
     t2.join();
-
     return 0;
 }

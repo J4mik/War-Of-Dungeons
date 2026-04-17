@@ -1,68 +1,12 @@
-#include <SDL3/SDL.h>
+#include "renderAPI.h"
+#include "stb_image.h"
 #include <SDL3/SDL_image.h>
 
-typedef struct Context
-{
-	const char* ExampleName;
-	const char* BasePath;
-	SDL_Window* Window;
-	SDL_GPUDevice* Device;
-	bool LeftPressed;
-	bool RightPressed;
-	bool DownPressed;
-	bool UpPressed;
-	float DeltaTime;
-} Context;
+unsigned int count = 0;
 
-// Vertex Formats
-typedef struct PositionVertex
-{
-	float x, y, z;
-} PositionVertex;
+int w, h, quit;
 
-typedef struct PositionColorVertex
-{
-	float x, y, z;
-	Uint8 r, g, b, a;
-} PositionColorVertex;
-
-typedef struct PositionTextureVertex
-{
-    float x, y, z;
-    float u, v;
-} PositionTextureVertex;
-
-// Matrix Math
-typedef struct Matrix4x4
-{
-	float m11, m12, m13, m14;
-	float m21, m22, m23, m24;
-	float m31, m32, m33, m34;
-	float m41, m42, m43, m44;
-} Matrix4x4;
-
-typedef struct Vector3
-{
-	float x, y, z;
-} Vector3;
-
-Matrix4x4 Matrix4x4_Multiply(Matrix4x4 matrix1, Matrix4x4 matrix2);
-Matrix4x4 Matrix4x4_CreateRotationZ(float radians);
-Matrix4x4 Matrix4x4_CreateTranslation(float x, float y, float z);
-Matrix4x4 Matrix4x4_CreateOrthographicOffCenter(float left, float right, float bottom, float top, float zNearPlane, float zFarPlane);
-Matrix4x4 Matrix4x4_CreatePerspectiveFieldOfView(float fieldOfView, float aspectRatio, float nearPlaneDistance, float farPlaneDistance);
-Matrix4x4 Matrix4x4_CreateLookAt(Vector3 cameraPosition, Vector3 cameraTarget, Vector3 cameraUpVector);
-Vector3 Vector3_Normalize(Vector3 vec);
-float Vector3_Dot(Vector3 vecA, Vector3 vecB);
-Vector3 Vector3_Cross(Vector3 vecA, Vector3 vecB);
-
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_MALLOC SDL_malloc
-#define STBI_REALLOC SDL_realloc
-#define STBI_FREE SDL_free
-#define STBI_ONLY_HDR
-#include "stb_image.h"
+keyPress key;
 
 int CommonInit(Context* context, SDL_WindowFlags windowFlags, int windowX, int windowY)
 {
@@ -77,7 +21,7 @@ int CommonInit(Context* context, SDL_WindowFlags windowFlags, int windowX, int w
 		return -1;
 	}
 
-	context->Window = SDL_CreateWindow(context->ExampleName, windowX, windowY, windowFlags);
+	context->Window = SDL_CreateWindow("War Of Dungeons", windowX, windowY, windowFlags);
 	if (context->Window == NULL)
 	{
 		SDL_Log("CreateWindow failed: %s", SDL_GetError());
@@ -98,12 +42,6 @@ void CommonQuit(Context* context)
 	SDL_ReleaseWindowFromGPUDevice(context->Device, context->Window);
 	SDL_DestroyWindow(context->Window);
 	SDL_DestroyGPUDevice(context->Device);
-}
-
-static const char* BasePath = NULL;
-void InitializeAssetLoader()
-{
-	BasePath = SDL_GetBasePath();
 }
 
 SDL_GPUShader* LoadShader(
@@ -272,249 +210,7 @@ SDL_Surface* LoadImage(const char* imageFilename, int desiredChannels)
 	return result;
 }
 
-typedef struct ASTCHeader
-{
-	Uint8 magic[4];
-	Uint8 blockX;
-	Uint8 blockY;
-	Uint8 blockZ;
-	Uint8 dimX[3];
-	Uint8 dimY[3];
-	Uint8 dimZ[3];
-} ASTCHeader;
-
-typedef struct DDS_PIXELFORMAT {
-	int dwSize;
-	int dwFlags;
-	int dwFourCC;
-	int dwRGBBitCount;
-	int dwRBitMask;
-	int dwGBitMask;
-	int dwBBitMask;
-	int dwABitMask;
-} DDS_PIXELFORMAT;
-
-typedef struct DDS_HEADER {
-	int dwMagic;
-	int dwSize;
-	int dwFlags;
-	int dwHeight;
-	int dwWidth;
-	int dwPitchOrLinearSize;
-	int dwDepth;
-	int dwMipMapCount;
-	int dwReserved1[11];
-	DDS_PIXELFORMAT ddspf;
-	int dwCaps;
-	int dwCaps2;
-	int dwCaps3;
-	int dwCaps4;
-	int dwReserved2;
-} DDS_HEADER;
-
-typedef struct DDS_HEADER_DXT10 {
-  int dxgiFormat;
-  int resourceDimension;
-  unsigned int miscFlag;
-  unsigned int arraySize;
-  unsigned int miscFlags2;
-} DDS_HEADER_DXT10;
-
-void* LoadASTCImage(const char* imageFilename, int* pWidth, int* pHeight, int* pImageDataLength)
-{
-	char fullPath[256];
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Images/%s", BasePath, imageFilename);
-
-	size_t fileSize;
-	void* fileContents = SDL_LoadFile(fullPath, &fileSize);
-	if (fileContents == NULL)
-	{
-		SDL_assert(!"Could not load ASTC image!");
-		return NULL;
-	}
-
-	ASTCHeader* header = (ASTCHeader*)fileContents;
-	if (header->magic[0] != 0x13 || header->magic[1] != 0xAB || header->magic[2] != 0xA1 || header->magic[3] != 0x5C)
-	{
-		SDL_assert(!"Bad magic number!");
-		return NULL;
-	}
-
-	// Get the image dimensions in texels
-	*pWidth = header->dimX[0] + (header->dimX[1] << 8) + (header->dimX[2] << 16);
-	*pHeight = header->dimY[0] + (header->dimY[1] << 8) + (header->dimY[2] << 16);
-
-	// Get the size of the texture data
-	unsigned int block_count_x = (*pWidth + header->blockX - 1) / header->blockX;
-	unsigned int block_count_y = (*pHeight + header->blockY - 1) / header->blockY;
-	*pImageDataLength = block_count_x * block_count_y * 16;
-
-	void* data = SDL_malloc(*pImageDataLength);
-	SDL_memcpy(data, (char*)fileContents + sizeof(ASTCHeader), *pImageDataLength);
-	SDL_free(fileContents);
-
-	return data;
-}
-
-void* LoadDDSImage(const char* imageFilename, SDL_GPUTextureFormat format, int* pWidth, int* pHeight, int* pImageDataLength)
-{
-	char fullPath[256];
-	SDL_snprintf(fullPath, sizeof(fullPath), "%sContent/Images/%s", BasePath, imageFilename);
-
-	size_t fileSize;
-	void* fileContents = SDL_LoadFile(fullPath, &fileSize);
-	if (fileContents == NULL)
-	{
-		SDL_assert(!"Could not load DDS image!");
-		return NULL;
-	}
-
-	DDS_HEADER* header = (DDS_HEADER*)fileContents;
-	if (header->dwMagic != 0x20534444)
-	{
-		SDL_assert(!"Bad magic number!");
-		return NULL;
-	}
-
-	bool hasDX10Header = header->ddspf.dwFlags == 0x4 && header->ddspf.dwFourCC == 0x30315844;
-
-	*pWidth = header->dwWidth;
-	*pHeight = header->dwHeight;
-	*pImageDataLength = header->dwPitchOrLinearSize;
-
-	void* data = SDL_malloc(*pImageDataLength);
-	SDL_memcpy(data, (char*)fileContents + sizeof(DDS_HEADER) + (hasDX10Header ? sizeof(DDS_HEADER_DXT10) : 0), *pImageDataLength);
-	SDL_free(fileContents);
-
-	return data;
-}
-
 // Matrix Math
-
-Matrix4x4 Matrix4x4_Multiply(Matrix4x4 matrix1, Matrix4x4 matrix2)
-{
-	Matrix4x4 result;
-
-	result.m11 = (
-		(matrix1.m11 * matrix2.m11) +
-		(matrix1.m12 * matrix2.m21) +
-		(matrix1.m13 * matrix2.m31) +
-		(matrix1.m14 * matrix2.m41)
-	);
-	result.m12 = (
-		(matrix1.m11 * matrix2.m12) +
-		(matrix1.m12 * matrix2.m22) +
-		(matrix1.m13 * matrix2.m32) +
-		(matrix1.m14 * matrix2.m42)
-	);
-	result.m13 = (
-		(matrix1.m11 * matrix2.m13) +
-		(matrix1.m12 * matrix2.m23) +
-		(matrix1.m13 * matrix2.m33) +
-		(matrix1.m14 * matrix2.m43)
-	);
-	result.m14 = (
-		(matrix1.m11 * matrix2.m14) +
-		(matrix1.m12 * matrix2.m24) +
-		(matrix1.m13 * matrix2.m34) +
-		(matrix1.m14 * matrix2.m44)
-	);
-	result.m21 = (
-		(matrix1.m21 * matrix2.m11) +
-		(matrix1.m22 * matrix2.m21) +
-		(matrix1.m23 * matrix2.m31) +
-		(matrix1.m24 * matrix2.m41)
-	);
-	result.m22 = (
-		(matrix1.m21 * matrix2.m12) +
-		(matrix1.m22 * matrix2.m22) +
-		(matrix1.m23 * matrix2.m32) +
-		(matrix1.m24 * matrix2.m42)
-	);
-	result.m23 = (
-		(matrix1.m21 * matrix2.m13) +
-		(matrix1.m22 * matrix2.m23) +
-		(matrix1.m23 * matrix2.m33) +
-		(matrix1.m24 * matrix2.m43)
-	);
-	result.m24 = (
-		(matrix1.m21 * matrix2.m14) +
-		(matrix1.m22 * matrix2.m24) +
-		(matrix1.m23 * matrix2.m34) +
-		(matrix1.m24 * matrix2.m44)
-	);
-	result.m31 = (
-		(matrix1.m31 * matrix2.m11) +
-		(matrix1.m32 * matrix2.m21) +
-		(matrix1.m33 * matrix2.m31) +
-		(matrix1.m34 * matrix2.m41)
-	);
-	result.m32 = (
-		(matrix1.m31 * matrix2.m12) +
-		(matrix1.m32 * matrix2.m22) +
-		(matrix1.m33 * matrix2.m32) +
-		(matrix1.m34 * matrix2.m42)
-	);
-	result.m33 = (
-		(matrix1.m31 * matrix2.m13) +
-		(matrix1.m32 * matrix2.m23) +
-		(matrix1.m33 * matrix2.m33) +
-		(matrix1.m34 * matrix2.m43)
-	);
-	result.m34 = (
-		(matrix1.m31 * matrix2.m14) +
-		(matrix1.m32 * matrix2.m24) +
-		(matrix1.m33 * matrix2.m34) +
-		(matrix1.m34 * matrix2.m44)
-	);
-	result.m41 = (
-		(matrix1.m41 * matrix2.m11) +
-		(matrix1.m42 * matrix2.m21) +
-		(matrix1.m43 * matrix2.m31) +
-		(matrix1.m44 * matrix2.m41)
-	);
-	result.m42 = (
-		(matrix1.m41 * matrix2.m12) +
-		(matrix1.m42 * matrix2.m22) +
-		(matrix1.m43 * matrix2.m32) +
-		(matrix1.m44 * matrix2.m42)
-	);
-	result.m43 = (
-		(matrix1.m41 * matrix2.m13) +
-		(matrix1.m42 * matrix2.m23) +
-		(matrix1.m43 * matrix2.m33) +
-		(matrix1.m44 * matrix2.m43)
-	);
-	result.m44 = (
-		(matrix1.m41 * matrix2.m14) +
-		(matrix1.m42 * matrix2.m24) +
-		(matrix1.m43 * matrix2.m34) +
-		(matrix1.m44 * matrix2.m44)
-	);
-
-	return result;
-}
-
-Matrix4x4 Matrix4x4_CreateRotationZ(float radians)
-{
-	return (Matrix4x4) {
-		 SDL_cosf(radians), SDL_sinf(radians), 0, 0,
-		-SDL_sinf(radians), SDL_cosf(radians), 0, 0,
-						 0, 				0, 1, 0,
-						 0,					0, 0, 1
-	};
-}
-
-Matrix4x4 Matrix4x4_CreateTranslation(float x, float y, float z)
-{
-	return (Matrix4x4) {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		x, y, z, 1
-	};
-}
-
 Matrix4x4 Matrix4x4_CreateOrthographicOffCenter(
 	float left,
 	float right,
@@ -531,114 +227,18 @@ Matrix4x4 Matrix4x4_CreateOrthographicOffCenter(
 	};
 }
 
-Matrix4x4 Matrix4x4_CreatePerspectiveFieldOfView(
-	float fieldOfView,
-	float aspectRatio,
-	float nearPlaneDistance,
-	float farPlaneDistance
-) {
-	float num = 1.0f / ((float) SDL_tanf(fieldOfView * 0.5f));
-	return (Matrix4x4) {
-		num / aspectRatio, 0, 0, 0,
-		0, num, 0, 0,
-		0, 0, farPlaneDistance / (nearPlaneDistance - farPlaneDistance), -1,
-		0, 0, (nearPlaneDistance * farPlaneDistance) / (nearPlaneDistance - farPlaneDistance), 0
-	};
+ComputeSpriteInstance* dataPtr;
+
+void renderSprite(ComputeSpriteInstance spriteRenderInstance)
+{
+	dataPtr[count] = spriteRenderInstance;
+	++count;
 }
 
-Matrix4x4 Matrix4x4_CreateLookAt(
-	Vector3 cameraPosition,
-	Vector3 cameraTarget,
-	Vector3 cameraUpVector
-) {
-	Vector3 targetToPosition = {
-		cameraPosition.x - cameraTarget.x,
-		cameraPosition.y - cameraTarget.y,
-		cameraPosition.z - cameraTarget.z
-	};
-	Vector3 vectorA = Vector3_Normalize(targetToPosition);
-	Vector3 vectorB = Vector3_Normalize(Vector3_Cross(cameraUpVector, vectorA));
-	Vector3 vectorC = Vector3_Cross(vectorA, vectorB);
-
-	return (Matrix4x4) {
-		vectorB.x, vectorC.x, vectorA.x, 0,
-		vectorB.y, vectorC.y, vectorA.y, 0,
-		vectorB.z, vectorC.z, vectorA.z, 0,
-		-Vector3_Dot(vectorB, cameraPosition), -Vector3_Dot(vectorC, cameraPosition), -Vector3_Dot(vectorA, cameraPosition), 1
-	};
-}
-
-Vector3 Vector3_Normalize(Vector3 vec)
-{
-	float magnitude = SDL_sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
-	return (Vector3) {
-		vec.x / magnitude,
-		vec.y / magnitude,
-		vec.z / magnitude
-	};
-}
-
-float Vector3_Dot(Vector3 vecA, Vector3 vecB)
-{
-	return (vecA.x * vecB.x) + (vecA.y * vecB.y) + (vecA.z * vecB.z);
-}
-
-Vector3 Vector3_Cross(Vector3 vecA, Vector3 vecB)
-{
-	return (Vector3) {
-		vecA.y * vecB.z - vecB.y * vecA.z,
-		-(vecA.x * vecB.z - vecB.x * vecA.z),
-		vecA.x * vecB.y - vecB.x * vecA.y
-	};
-}
-#include <SDL3/SDL_main.h>
-
-static SDL_GPUComputePipeline* ComputePipeline;
-static SDL_GPUGraphicsPipeline* RenderPipeline;
-static SDL_GPUSampler* Sampler;
-static SDL_GPUTexture* Texture;
-static SDL_GPUTransferBuffer* SpriteComputeTransferBuffer;
-static SDL_GPUBuffer* SpriteComputeBuffer;
-static SDL_GPUBuffer* SpriteVertexBuffer;
-static SDL_GPUBuffer* SpriteIndexBuffer;
-
-typedef struct PositionTextureColorVertex
-{
-	float x, y, z, w;
-	float u, v, padding_a, padding_b;
-	float r, g, b, a;
-} PositionTextureColorVertex;
-
-typedef struct ComputeSpriteInstance
-{
-	float x, y, z;
-	float rotation;
-	float w, h, padding_a, padding_b;
-	float tex_u, tex_v, tex_w, tex_h;
-	float r, g, b, a;
-} ComputeSpriteInstance;
-
-static const Uint32 SPRITE_COUNT = 64;
-
-static float uCoords[4] = { 0.0f, 0.5f, 0.0f, 0.5f};
-static float vCoords[4] = { 0.0f, 0.0f, 0.5f, 0.5f};
-
-static float colorKey[4] = {1.0f, 0.0f, 1.0f, 1.0f};
-
-int main(int argc, char* argv[])
+int renderer()
 {
 	Context context = { 0 };
-	int quit = 0;
 	float lastTime = 0;
-
-	for (int i = 1; i < argc; i += 1)
-	{
-		if (SDL_strcmp(argv[i], "-name") == 0 && argc > i + 1)
-		{
-			const char* exampleName = argv[i + 1];
-			int foundExample = 0;
-		}
-	}
 
 	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
@@ -646,9 +246,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	InitializeAssetLoader();
-
-	SDL_Gamepad* gamepad = NULL;
 	bool canDraw = true;
 
 	int result = CommonInit(&context, SDL_WINDOW_RESIZABLE, 900, 700);
@@ -769,7 +366,7 @@ int main(int argc, char* argv[])
 	);
 
 	// Load the image data
-	SDL_Surface *imageData = LoadImage("data/images/player.png", 4);
+	SDL_Surface *imageData = LoadImage("data/images/GrassTiles.png", 4);
 	if (imageData == NULL)
 	{
 		SDL_Log("Could not load image data!");
@@ -920,72 +517,111 @@ int main(int argc, char* argv[])
 
 	while (!quit)
 	{
-		context.LeftPressed = 0;
-		context.RightPressed = 0;
-		context.DownPressed = 0;
-		context.UpPressed = 0;
+		SDL_Event event;
 
-		SDL_Event evt;
-		while (SDL_PollEvent(&evt))
-		{
-			if (evt.type == SDL_EVENT_QUIT)
-			{
-				quit = 1;
-			}
-			else if (evt.type == SDL_EVENT_KEY_DOWN)
-			{
-				if (evt.key.key == SDLK_D)
-				{
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+        case SDL_EVENT_QUIT:
+            quit = 1;
+            break;
+        case SDL_EVENT_KEY_DOWN:
+            switch (event.key.scancode)
+            {
+            case SDL_SCANCODE_W:
+                key.w = 1;
+                break;
+            case SDL_SCANCODE_A:
+                key.a = 1;
+                break;
+            case SDL_SCANCODE_S:
+                key.s = 1;
+                break;
+            case SDL_SCANCODE_D:
+                key.d = 1;
+                break;
 
-				}
-				else if (evt.key.key == SDLK_A)
-				{
+            case SDL_SCANCODE_R:
+                key.r = 1;
+                break;
 
-				}
-				else if (evt.key.key == SDLK_LEFT)
-				{
-					context.LeftPressed = true;
-				}
-				else if (evt.key.key == SDLK_RIGHT)
-				{
-					context.RightPressed = true;
-				}
-				else if (evt.key.key == SDLK_DOWN)
-				{
-					context.DownPressed = true;
-				}
-				else if (evt.key.key == SDLK_UP)
-				{
-					context.UpPressed = true;
-				}
-			}
+            case SDL_SCANCODE_UP:
+                key.upArrow = 1;
+                break;
+            case SDL_SCANCODE_LEFT:
+                key.leftArrow = 1;
+                break;
+            case SDL_SCANCODE_DOWN:
+                key.downArrow = 1;
+                break;
+            case SDL_SCANCODE_RIGHT:
+                key.rightArrow = 1;
+                break;
+            }
+            break;
+
+        case SDL_EVENT_KEY_UP:
+            switch (event.key.scancode)
+            {
+            case SDL_SCANCODE_W:
+                key.w = 0;
+                break;
+            case SDL_SCANCODE_A:
+                key.a = 0;
+                break;
+            case SDL_SCANCODE_S:
+                key.s = 0;
+                break;
+            case SDL_SCANCODE_D:
+                key.d = 0;
+                break;
+            case SDL_SCANCODE_R:
+                key.r = 0;
+                break;
+
+            case SDL_SCANCODE_UP:
+                key.upArrow = 0;
+                break;
+
+            case SDL_SCANCODE_LEFT:
+                key.leftArrow = 0;
+                break;
+            case SDL_SCANCODE_DOWN:
+                key.downArrow = 0;
+                break;
+            case SDL_SCANCODE_RIGHT:
+                key.rightArrow = 0;
+                break;
+            }
+            break;
 		}
-		if (quit)
-		{
-			break;
-		}
+	}
 
-
+	SDL_GetWindowSize((&context)->Window, &w, &h);
+	
 		// issues a draw call
-		float newTime = SDL_GetTicks() / 1000.0f;
+		float newTime = SDL_GetTicks();
 		context.DeltaTime = newTime - lastTime;
 		lastTime = newTime;
 
 		Matrix4x4 cameraMatrix = Matrix4x4_CreateOrthographicOffCenter(
 		0,
-		640,
-		480,
+		w,
+		h,
 		0,
 		0,
 		-1
 	);
-
+	
     SDL_GPUCommandBuffer* cmdBuf = SDL_AcquireGPUCommandBuffer((&context)->Device);
     if (cmdBuf == NULL)
     {
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return -1;
     }
+
+	SDL_GPUTexture* gpuRenderTarget;
 
     SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdBuf, (&context)->Window, &swapchainTexture, NULL, NULL)) {
@@ -996,32 +632,11 @@ int main(int argc, char* argv[])
 	if (swapchainTexture != NULL)
 	{
 		// Build sprite instance transfer
-		ComputeSpriteInstance* dataPtr = SDL_MapGPUTransferBuffer(
+		dataPtr = SDL_MapGPUTransferBuffer(
 			(&context)->Device,
 			SpriteComputeTransferBuffer,
 			true
 		);
-		SDL_srand(0);
-
-
-		for (Uint32 i = 0; i < SPRITE_COUNT; ++i)
-		{
-			Sint32 ravioli = SDL_rand(4);
-			dataPtr[i].x = (float)(SDL_rand(640));
-			dataPtr[i].y = (float)(SDL_rand(480));
-			dataPtr[i].z = 0;
-			dataPtr[i].rotation = 0;
-			dataPtr[i].w = 32;
-			dataPtr[i].h = 32;
-			dataPtr[i].tex_u = uCoords[ravioli];
-			dataPtr[i].tex_v = vCoords[ravioli];
-			dataPtr[i].tex_w = 0.5f;
-			dataPtr[i].tex_h = 0.5f;
-			dataPtr[i].r = 1.0f;
-			dataPtr[i].g = 1.0f;
-			dataPtr[i].b = 1.0f;
-			dataPtr[i].a = 1.0f;
-		}
 
 		SDL_UnmapGPUTransferBuffer((&context)->Device, SpriteComputeTransferBuffer);
 
@@ -1054,6 +669,9 @@ int main(int argc, char* argv[])
 			1
 		);
 
+		count = 0;
+		submitSprites(context.DeltaTime, w, h, quit, key);
+
 		SDL_BindGPUComputePipeline(computePass, ComputePipeline);
 		SDL_BindGPUComputeStorageBuffers(
 			computePass,
@@ -1071,7 +689,7 @@ int main(int argc, char* argv[])
 		SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(
 			cmdBuf,
 			&(SDL_GPUColorTargetInfo){
-				.texture = swapchainTexture,
+				.texture = gpuRenderTarget,
 				.cycle = false,
 				.load_op = SDL_GPU_LOADOP_CLEAR,
 				.store_op = SDL_GPU_STOREOP_STORE,
